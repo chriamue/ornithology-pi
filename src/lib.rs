@@ -1,3 +1,8 @@
+pub mod capture;
+pub use capture::Capture;
+
+pub mod errors;
+
 #[cfg(test)]
 mod tests {
     #[test]
