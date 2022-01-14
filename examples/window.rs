@@ -1,5 +1,5 @@
 #[cfg(feature = "window")]
-use image::DynamicImage;
+use image::{imageops, DynamicImage};
 #[cfg(feature = "window")]
 use ornithology_pi::{Capture, Crop, Label};
 #[cfg(feature = "window")]
@@ -35,14 +35,27 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let crop_img = DynamicImage::ImageRgb8(frame.clone());
                 let detections = crop.crop(crop_img);
                 if detections.len() > 0 {
-                    let frame = detections[0].1.clone();
+                    let detection_frame = detections[0].1.clone();
 
-                    let detection = labeler.detect(&frame);
-                    print!("{:?}", detection);
-                    let frame = frame.to_rgb8();
-                    let image = ImageView::new(ImageInfo::rgb8(640, 480), &frame);
-                    window.set_image("image-001", image)?;
+                    let detection = labeler.detect(&detection_frame);
+                    match detection {
+                        Some(detection) => {
+                            println!("{:?}", detection);
+                            let frame = detection_frame.to_rgb8();
+                            let frame =
+                                imageops::resize(&frame, 640, 480, imageops::FilterType::Triangle);
+                            let image = ImageView::new(ImageInfo::rgb8(640, 480), &frame);
+                            window.set_image("image-001", image)?;
+                        }
+                        _ => {
+                            let frame =
+                                imageops::resize(&frame, 640, 480, imageops::FilterType::Triangle);
+                            let image = ImageView::new(ImageInfo::rgb8(640, 480), &frame);
+                            window.set_image("image-001", image)?;
+                        }
+                    }
                 } else {
+                    let frame = imageops::resize(&frame, 640, 480, imageops::FilterType::Triangle);
                     let image = ImageView::new(ImageInfo::rgb8(640, 480), &frame);
                     window.set_image("image-001", image)?;
                 }

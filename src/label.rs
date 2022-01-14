@@ -1,4 +1,4 @@
-use image::DynamicImage;
+use image::{DynamicImage, GenericImageView};
 use lenna_birds_plugin::Birds;
 
 pub struct Label {
@@ -7,6 +7,10 @@ pub struct Label {
 
 impl Label {
     pub fn detect(&self, image: &DynamicImage) -> Option<String> {
+        if image.width() < 1 || image.height() < 1 {
+            return None;
+        }
+
         self.model
             .detect_label(&Box::new(image.clone()))
             .unwrap_or(None)

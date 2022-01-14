@@ -37,7 +37,7 @@ impl Capture {
 
 impl Default for Capture {
     fn default() -> Self {
-        Self::new(640, 480).unwrap()
+        Self::new(1920, 1080).unwrap()
     }
 }
 
