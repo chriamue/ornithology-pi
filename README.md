@@ -26,3 +26,13 @@ cargo run --example label
 ```
 
 The bird detected on the image will be printed.
+
+### Window example
+
+```sh
+cargo run --features="window" example window
+```
+
+Press space for next frame.
+
+Press Escape to exit.
