@@ -1,8 +1,11 @@
+#[cfg(feature = "window")]
 use image::DynamicImage;
-use ornithology_pi::Capture;
-use ornithology_pi::Crop;
+#[cfg(feature = "window")]
+use ornithology_pi::{Capture, Crop, Label};
+#[cfg(feature = "window")]
 use show_image::{create_window, event, ImageInfo, ImageView};
 
+#[cfg(feature = "window")]
 #[show_image::main]
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut capture = Capture::default();
@@ -13,6 +16,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let image = ImageView::new(ImageInfo::rgb8(640, 480), &frame);
 
     let crop = Crop::default();
+    let labeler = Label::default();
 
     let window = create_window("image", Default::default())?;
     window.set_image("image-001", image)?;
@@ -31,7 +35,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let crop_img = DynamicImage::ImageRgb8(frame.clone());
                 let detections = crop.crop(crop_img);
                 if detections.len() > 0 {
-                    let frame = detections[0].1.clone().to_rgb8();
+                    let frame = detections[0].1.clone();
+
+                    let detection = labeler.detect(&frame);
+                    print!("{:?}", detection);
+                    let frame = frame.to_rgb8();
                     let image = ImageView::new(ImageInfo::rgb8(640, 480), &frame);
                     window.set_image("image-001", image)?;
                 } else {
@@ -44,3 +52,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
+
+#[cfg(not(feature = "window"))]
+fn main() {}

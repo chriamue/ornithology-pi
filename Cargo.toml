@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [features]
-default = ["nokhwa/input-v4l"]
-window = ["show-image"]
+default = ["window","nokhwa/input-v4l"]
+window = ["show-image/image"]
 
 [dependencies]
 image = { version = "0.23.14", default-features = false, features = [
@@ -14,8 +14,8 @@ image = { version = "0.23.14", default-features = false, features = [
 ] }
 imageproc = { version = "0.22", default-features = false }
 lenna_core = { git = "https://github.com/lenna-project/lenna-core", branch = "main" }
-lenna_yolo_plugin = { git = "https://github.com/lenna-project/yolo-plugin", branch = "main" }
-lenna_birds_plugin = { git = "https://github.com/lenna-project/birds-plugin", branch = "main" }
+lenna_yolo_plugin = { git = "https://github.com/lenna-project/yolo-plugin", branch = "main", default-features = false }
+lenna_birds_plugin = { git = "https://github.com/lenna-project/birds-plugin", branch = "main", default-features = false }
 nokhwa = { version = "0.9.4" }
 tract-onnx = { version = "0.15.9-pre", git = "https://github.com/chriamue/tract.git", branch = "main" }
-show-image = { version = "0.10.1", feature = "image", optional = true }
+show-image = { version = "0.10.1", optional = true }
