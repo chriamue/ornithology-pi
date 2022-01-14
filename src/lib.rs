@@ -1,5 +1,7 @@
 pub mod capture;
 pub use capture::Capture;
+pub mod crop;
+pub use crop::Crop;
 
 pub mod errors;
 
