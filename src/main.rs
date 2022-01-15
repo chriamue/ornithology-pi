@@ -10,8 +10,9 @@ use rocket::serde::json::Json;
 use rocket::State;
 use std::sync::{Arc, Mutex};
 
+
 struct BirdObserver {
-    //sightings: &'static mut SightingsState,
+    pub sightings: SightingsState,
 }
 
 unsafe impl Send for BirdObserver {}
@@ -19,6 +20,8 @@ unsafe impl Sync for BirdObserver {}
 
 impl Observer for BirdObserver {
     fn notify(&self, sighting: DataSighting) {
+        let mut sightings = self.sightings.mutex.lock().unwrap();
+        sightings.push(sighting.0.clone());
         println!("{:?}", sighting.0.species);
     }
 }
@@ -39,10 +42,18 @@ pub struct DetectorState {
 }
 
 #[get("/sightings")]
-fn sightings(sightings: &State<SightingsState>) -> Json<Vec<Sighting>> {
-    let sightings: Vec<Sighting> = sightings.mutex.lock().unwrap().to_vec();
+fn sightings(detector: &State<DetectorState>) -> Json<Vec<Sighting>> {
+    let detector = detector.mutex.lock().unwrap();
+    let observer = detector.observers().last().unwrap().as_any();
 
-    Json(sightings)
+    match observer.downcast_ref::<BirdObserver>() {
+        Some(bird_observer) => {
+            let sightings = bird_observer.sightings.mutex.lock().unwrap();
+            let sightings = sightings.to_vec();
+            Json(sightings)
+        },
+        _ => Json(Vec::new()),
+    }
 }
 
 #[get("/detect")]
@@ -53,12 +64,12 @@ fn detect(detector: &State<DetectorState>) {
 
 #[tokio::main]
 async fn main() {
-    let mut sightings = SightingsState {
+    let sightings = SightingsState {
         mutex: Arc::new(Mutex::new(Vec::new())),
     };
 
     let observer = BirdObserver {
-        //sightings: &mut sightings,
+        sightings: sightings,
     };
 
     let mut birddetector = BirdDetector::default();
@@ -71,7 +82,7 @@ async fn main() {
 
     let rocket = rocket::build()
         .mount("/", routes![index, sightings, detect])
-        .manage(sightings)
+        //.manage(sightings)
         .manage(detector);
     rocket.launch().await.unwrap()
 }

@@ -29,6 +29,10 @@ impl Observable for BirdDetector {
     fn register(&mut self, observer: Box<dyn Observer>) {
         self.subscribers.push(observer);
     }
+
+    fn observers(&self) -> &Vec<Box<dyn Observer>> {
+        &self.subscribers
+    }
 }
 
 impl Detector for BirdDetector {
