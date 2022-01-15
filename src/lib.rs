@@ -1,3 +1,6 @@
+pub mod bluetooth;
+pub use bluetooth::Bluetooth;
+
 pub mod capture;
 pub use capture::Capture;
 pub mod crop;
