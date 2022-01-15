@@ -1,24 +1,51 @@
 #[cfg(feature = "window")]
-use image::{imageops, DynamicImage};
+use image::imageops;
 #[cfg(feature = "window")]
-use ornithology_pi::{Capture, Crop, Label};
+use ornithology_pi::{
+    observer::{Observable, Observer},
+    DataSighting,
+};
+use show_image::WindowProxy;
 #[cfg(feature = "window")]
 use show_image::{create_window, event, ImageInfo, ImageView};
+
+struct BirdObserver {
+    window: WindowProxy,
+}
+
+unsafe impl Send for BirdObserver {}
+unsafe impl Sync for BirdObserver {}
+
+impl Observer for BirdObserver {
+    fn notify(&self, sighting: DataSighting) {
+        println!("{:?}", sighting.0.species);
+        let frame = sighting.1.to_rgb8();
+        let frame = imageops::resize(&frame, 640, 480, imageops::FilterType::Triangle);
+        let image = ImageView::new(ImageInfo::rgb8(640, 480), &frame);
+        self.window.set_image("bird", image).unwrap();
+    }
+}
 
 #[cfg(feature = "window")]
 #[show_image::main]
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut capture = Capture::default();
-    let frame = capture.frame().unwrap();
+    use ornithology_pi::{detector::Detector, BirdDetector};
+
+    let mut birddetector = BirdDetector::default();
+
+    let window = create_window("image", Default::default())?;
+    let detector_window = create_window("detection", Default::default()).unwrap();
+
+    birddetector.register(Box::new(BirdObserver {
+        window: detector_window,
+    }));
+
+    let frame = birddetector.capture.frame().unwrap();
     println!("{}, {}", frame.width(), frame.height());
     frame.save("frame.jpg").unwrap();
 
     let image = ImageView::new(ImageInfo::rgb8(640, 480), &frame);
 
-    let crop = Crop::default();
-    let labeler = Label::default();
-
-    let window = create_window("image", Default::default())?;
     window.set_image("image-001", image)?;
 
     for event in window.event_channel().unwrap() {
@@ -31,34 +58,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             if event.input.key_code == Some(event::VirtualKeyCode::Space)
                 && event.input.state.is_pressed()
             {
-                let frame = capture.frame().unwrap();
-                let crop_img = DynamicImage::ImageRgb8(frame.clone());
-                let detections = crop.crop(crop_img);
-                if detections.len() > 0 {
-                    let detection_frame = detections[0].1.clone();
-
-                    let detection = labeler.detect(&detection_frame);
-                    match detection {
-                        Some(detection) => {
-                            println!("{:?}", detection);
-                            let frame = detection_frame.to_rgb8();
-                            let frame =
-                                imageops::resize(&frame, 640, 480, imageops::FilterType::Triangle);
-                            let image = ImageView::new(ImageInfo::rgb8(640, 480), &frame);
-                            window.set_image("image-001", image)?;
-                        }
-                        _ => {
-                            let frame =
-                                imageops::resize(&frame, 640, 480, imageops::FilterType::Triangle);
-                            let image = ImageView::new(ImageInfo::rgb8(640, 480), &frame);
-                            window.set_image("image-001", image)?;
-                        }
-                    }
-                } else {
-                    let frame = imageops::resize(&frame, 640, 480, imageops::FilterType::Triangle);
-                    let image = ImageView::new(ImageInfo::rgb8(640, 480), &frame);
-                    window.set_image("image-001", image)?;
-                }
+                let frame = birddetector.capture.frame().unwrap();
+                let frame = imageops::resize(&frame, 640, 480, imageops::FilterType::Triangle);
+                let image = ImageView::new(ImageInfo::rgb8(640, 480), &frame);
+                window.set_image("image-001", image)?;
+                birddetector.detect_next();
             }
         }
     }

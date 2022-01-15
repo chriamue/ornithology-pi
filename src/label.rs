@@ -1,6 +1,7 @@
 use image::{DynamicImage, GenericImageView};
 use lenna_birds_plugin::Birds;
 
+#[derive(Clone)]
 pub struct Label {
     model: Birds,
 }

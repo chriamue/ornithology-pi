@@ -5,13 +5,14 @@ use nokhwa::CameraFormat;
 use nokhwa::FrameFormat;
 use std::error::Error;
 
+use super::Capture;
 use crate::errors::NoDevice;
 
-pub struct Capture {
+pub struct WebCam {
     pub device: Camera,
 }
 
-impl Capture {
+impl WebCam {
     pub fn new(width: u32, height: u32) -> Result<Self, Box<dyn Error>> {
         match Camera::new(
             0,
@@ -26,18 +27,20 @@ impl Capture {
             _ => Err(NoDevice.into()),
         }
     }
+}
 
-    pub fn frame(&mut self) -> Result<ImageBuffer<Rgb<u8>, Vec<u8>>, Box<dyn Error>> {
+impl Default for WebCam {
+    fn default() -> Self {
+        Self::new(1920, 1080).unwrap()
+    }
+}
+
+impl Capture for WebCam {
+    fn frame(&mut self) -> Result<ImageBuffer<Rgb<u8>, Vec<u8>>, Box<dyn Error>> {
         if !self.device.is_stream_open() {
             self.device.open_stream().unwrap();
         }
         Ok(self.device.frame().unwrap())
-    }
-}
-
-impl Default for Capture {
-    fn default() -> Self {
-        Self::new(1920, 1080).unwrap()
     }
 }
 
@@ -48,7 +51,7 @@ mod tests {
     #[ignore]
     #[test]
     fn default() {
-        let mut capture = Capture::default();
+        let mut capture = WebCam::default();
         assert!(capture.frame().is_ok());
         assert!(capture.frame().unwrap().width() == 640);
     }

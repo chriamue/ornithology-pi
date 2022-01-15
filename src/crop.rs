@@ -5,6 +5,7 @@ const THREASHOLD: f32 = 0.5;
 const BIRD_CLASS: usize = 2;
 const BORDER: u32 = 50;
 
+#[derive(Clone)]
 pub struct Crop {
     threashold: f32,
     class: usize,
