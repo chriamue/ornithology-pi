@@ -1,0 +1,74 @@
+name: Release
+
+on:
+  push:
+    branches: [ main ]
+    #tags:
+    #  - v*
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  publish-to-github:
+    name: Publish to Github
+    runs-on: ${{matrix.os}}
+    strategy:
+      matrix:
+        include:
+        - build: linux
+          os: ubuntu-latest
+          rust: stable
+          target: x86_64-unknown-linux-musl
+          dependencies:  libdbus-1-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
+          extra_env: ""
+          cross: false
+        - build: arm-v7
+          os: ubuntu-latest
+          rust: stable
+          target: armv7-unknown-linux-gnueabihf
+          linker: gcc-arm-linux-gnueabihf
+          dependencies:  libdbus-1-dev:armhf libgstreamer1.0-dev:armhf libgstreamer-plugins-base1.0-dev:armhf
+          extra_env: PKG_CONFIG_LIBDIR_armv7_unknown_linux_gnueabihf=/usr/lib/arm-linux-gnueabihf/pkgconfig
+          cross: true
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 1
+
+    - name: Cache
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          ~/.rustup
+          target
+        key: ${{ runner.os }}-${{ matrix.rust }}
+
+
+    - name: Install Dependencies
+      if: ${{ matrix.build == 'arm-v7' }}
+      uses: ryankurte/action-apt@v0.3.0
+      with:
+        arch: armhf
+        packages: ${{ matrix.dependencies }}
+    - name: Install Dependencies
+      run: |
+        sudo apt update
+        sudo apt update
+        sudo apt install ${{ matrix.dependencies }}
+    - name: Install Linker
+      if: matrix.cross
+      run: |
+        sudo apt update
+        sudo apt install ${{ matrix.linker }}
+        cat .cargo/config.github >> .cargo/config
+    - name: Install Rust
+      run: |
+        rustup install ${{ matrix.rust }}
+        rustup target add ${{ matrix.target }}
+        rustup show
+    - name: Build
+      run: ${{ matrix.extra_env }} cargo build --release --target ${{ matrix.target }}

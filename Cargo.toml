@@ -2,9 +2,14 @@
 name = "ornithology-pi"
 version = "0.1.0"
 edition = "2021"
+authors = ["Christian <chriamue@gmail.com>"]
+description = "Capture birds in your garden, running on raspberry pi."
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/chriamue/ornithology-pi"
 
 [features]
-default = ["window", "nokhwa/input-v4l"]
+default = ["window", "nokhwa/input-gst"]
 window = ["show-image/image"]
 
 [dependencies]
@@ -19,7 +24,7 @@ imageproc = { version = "0.22", default-features = false }
 lenna_core = { git = "https://github.com/lenna-project/lenna-core", branch = "main" }
 lenna_yolo_plugin = { git = "https://github.com/lenna-project/yolo-plugin", branch = "main", default-features = false }
 lenna_birds_plugin = { git = "https://github.com/lenna-project/birds-plugin", branch = "main", default-features = false }
-nokhwa = { version = "0.9.4" }
+nokhwa = { version = "0.9.4", features = ["input-gst"] }
 tract-onnx = { version = "0.15.9-pre", git = "https://github.com/chriamue/tract.git", branch = "main" }
 
 serde = { version = "1.0", features = ["derive"] }
@@ -32,3 +37,7 @@ uuid = { version = "0.8", features = ["serde", "v4"] }
 pretty_env_logger = "0.2"
 rocket = { version = "0.5.0-rc.1", features = ["json"] }
 rocket-include-static-resources = { version = "0.10.0", features=["cache"] }
+
+[package.metadata.deb]
+section = "utility"
+license-file = ["LICENSE"]
