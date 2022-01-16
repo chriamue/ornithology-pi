@@ -2,7 +2,6 @@ use std::any::Any;
 
 use crate::DataSighting;
 
-
 pub trait ObserverToAny: 'static {
     fn as_any(&self) -> &dyn Any;
 }
