@@ -41,3 +41,4 @@ rocket-include-static-resources = { version = "0.10.0", features=["cache"] }
 [package.metadata.deb]
 section = "utility"
 license-file = ["LICENSE"]
+depends = "$auto"
