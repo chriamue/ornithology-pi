@@ -1,5 +1,7 @@
 #[macro_use]
 extern crate rocket;
+#[macro_use]
+extern crate rocket_include_static_resources;
 
 use ornithology_pi::{detector::Detector, BirdDetector};
 use ornithology_pi::{
@@ -9,8 +11,24 @@ use ornithology_pi::{
 use rocket::fs::NamedFile;
 use rocket::serde::json::Json;
 use rocket::State;
+use rocket_include_static_resources::{EtagIfNoneMatch, StaticContextManager, StaticResponse};
 use std::path::Path;
 use std::sync::{Arc, Mutex};
+
+cached_static_response_handler! {
+    259_200;
+    "/index.js" => cached_indexjs => "indexjs",
+    "/index.css" => cached_indexcss => "indexcss",
+    "/favicon.ico" => cached_favicon => "favicon",
+}
+
+#[get("/")]
+fn index(
+    static_resources: &State<StaticContextManager>,
+    etag_if_none_match: EtagIfNoneMatch,
+) -> StaticResponse {
+    static_resources.build(&etag_if_none_match, "index")
+}
 
 struct BirdObserver {
     pub sightings: Arc<Mutex<Vec<Sighting>>>,
@@ -50,11 +68,6 @@ impl Observer for BirdObserver {
         println!("{:?}", sighting.0.species);
         self.save(sighting);
     }
-}
-
-#[get("/")]
-fn index() -> &'static str {
-    "Hello, world!"
 }
 
 #[derive(Clone)]
@@ -116,6 +129,13 @@ async fn main() {
     };
 
     let rocket = rocket::build()
+        .attach(static_resources_initializer!(
+            "indexjs" => "static/index.js",
+            "indexcss" => "static/index.css",
+            "favicon" => "static/favicon.ico",
+            "index" => ("static", "index.html"),
+        ))
+        .mount("/", routes![cached_indexjs, cached_indexcss, cached_favicon])
         .mount("/", routes![index, sightings, sighting, detect])
         .manage(detector);
     rocket.launch().await.unwrap()
