@@ -2,7 +2,7 @@ name: Release
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     #tags:
     #  - v*
 
@@ -19,4 +19,18 @@ jobs:
         with:
           toolchain: stable
       - run: cargo install cross
+      - run: cargo install cargo-deb
       - run: cross build --release --target armv7-unknown-linux-gnueabihf
+      - run: ls
+      - run: ls target
+      - run: ls target/armv7-unknown-linux-gnueabihf
+
+      - uses: fiam/arm-none-eabi-gcc@v1
+        with:
+          release: "9-2019-q4"
+      - run: cargo deb --no-build --target armv7-unknown-linux-gnueabihf
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: Debian-Installer
+          path: target/armv7-unknown-linux-gnueabihf/debian/*.deb

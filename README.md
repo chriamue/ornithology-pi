@@ -48,6 +48,7 @@ cargo deb
 
 ```
 cargo install cross
+cargo install cargo-deb
 docker build -t crossbuild:local -f crossbuild.Dockerfile .
 cross build --release --target armv7-unknown-linux-gnueabihf
 cargo deb --no-build --target armv7-unknown-linux-gnueabihf
