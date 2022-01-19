@@ -1,34 +1,12 @@
-#[macro_use]
-extern crate rocket;
-#[macro_use]
-extern crate rocket_include_static_resources;
-
 use ornithology_pi::{detector::Detector, BirdDetector};
 use ornithology_pi::{
     observer::{Observable, Observer},
     DataSighting, Sighting,
 };
-use rocket::fs::NamedFile;
-use rocket::serde::json::Json;
-use rocket::State;
-use rocket_include_static_resources::{EtagIfNoneMatch, StaticContextManager, StaticResponse};
-use std::path::Path;
 use std::sync::{Arc, Mutex};
+use std::{thread, time};
 
-cached_static_response_handler! {
-    259_200;
-    "/index.js" => cached_indexjs => "indexjs",
-    "/index.css" => cached_indexcss => "indexcss",
-    "/favicon.ico" => cached_favicon => "favicon",
-}
-
-#[get("/")]
-fn index(
-    static_resources: &State<StaticContextManager>,
-    etag_if_none_match: EtagIfNoneMatch,
-) -> StaticResponse {
-    static_resources.build(&etag_if_none_match, "index")
-}
+use ornithology_pi::server::run_server;
 
 struct BirdObserver {
     pub sightings: Arc<Mutex<Vec<Sighting>>>,
@@ -47,18 +25,6 @@ impl BirdObserver {
             ))
             .unwrap();
     }
-
-    fn get(&self, id: String) -> Option<Sighting> {
-        let sightings = self.sightings.lock().unwrap();
-        match sightings
-            .iter()
-            .filter(|sighting| sighting.uuid == id)
-            .last()
-        {
-            Some(sighting) => Some(sighting.clone()),
-            _ => None,
-        }
-    }
 }
 
 impl Observer for BirdObserver {
@@ -70,52 +36,7 @@ impl Observer for BirdObserver {
     }
 }
 
-#[derive(Clone)]
-pub struct DetectorState {
-    pub mutex: Arc<Mutex<BirdDetector>>,
-}
-
-#[get("/sightings")]
-fn sightings(detector: &State<DetectorState>) -> Json<Vec<Sighting>> {
-    let detector = detector.mutex.lock().unwrap();
-    let observer = detector.observers().last().unwrap().as_any();
-
-    match observer.downcast_ref::<BirdObserver>() {
-        Some(bird_observer) => {
-            let sightings = bird_observer.sightings.lock().unwrap();
-            let sightings = sightings.to_vec();
-            Json(sightings)
-        }
-        _ => Json(Vec::new()),
-    }
-}
-
-#[get("/sightings/<id>")]
-async fn sighting(detector: &State<DetectorState>, id: String) -> Option<NamedFile> {
-    let filename = {
-        let detector = detector.mutex.lock().unwrap();
-        let observer = detector.observers().last().unwrap().as_any();
-
-        let obs = observer.downcast_ref::<BirdObserver>().unwrap();
-        let sighting = obs.get(id).unwrap().clone();
-        format!("{}_{}.jpg", sighting.species, sighting.uuid)
-    };
-
-    NamedFile::open(Path::new("sightings/").join(filename))
-        .await
-        .ok()
-}
-
-#[get("/detect")]
-fn detect(detector: &State<DetectorState>) {
-    let mut detector = detector.mutex.lock().unwrap();
-    detector.detect_next();
-}
-
-#[tokio::main]
-async fn main() {
-    let sightings: Arc<Mutex<Vec<Sighting>>> = Arc::new(Mutex::new(Vec::new()));
-
+async fn run_detector(sightings: Arc<Mutex<Vec<Sighting>>>) -> () {
     let observer = BirdObserver {
         sightings: sightings,
     };
@@ -124,19 +45,18 @@ async fn main() {
 
     birddetector.register(Box::new(observer));
 
-    let detector = DetectorState {
-        mutex: Arc::new(Mutex::new(birddetector)),
-    };
+    let seconds = time::Duration::from_secs(2);
 
-    let rocket = rocket::build()
-        .attach(static_resources_initializer!(
-            "indexjs" => "static/index.js",
-            "indexcss" => "static/index.css",
-            "favicon" => "static/favicon.ico",
-            "index" => ("static", "index.html"),
-        ))
-        .mount("/", routes![cached_indexjs, cached_indexcss, cached_favicon])
-        .mount("/", routes![index, sightings, sighting, detect])
-        .manage(detector);
-    rocket.launch().await.unwrap()
+    loop {
+        birddetector.detect_next();
+        thread::sleep(seconds);
+    }
+}
+
+#[tokio::main]
+async fn main() {
+    let sightings: Arc<Mutex<Vec<Sighting>>> = Arc::new(Mutex::new(Vec::new()));
+    let detector_thread = tokio::spawn(run_detector(sightings.clone()));
+    let server_thread = tokio::spawn(run_server(sightings.clone()));
+    tokio::join!(detector_thread, server_thread);
 }

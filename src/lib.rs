@@ -18,3 +18,5 @@ pub use sighting::{DataSighting, Sighting};
 
 pub mod errors;
 pub mod observer;
+
+pub mod server;
