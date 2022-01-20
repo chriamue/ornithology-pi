@@ -40,10 +40,9 @@ impl Capture for WebCam {
         if !self.device.is_stream_open() {
             self.device.open_stream().unwrap();
         }
-        self.device.frame().unwrap();
-        self.device.frame().unwrap();
-        self.device.frame().unwrap();
-        self.device.frame().unwrap();
+        for _ in  0..30 {
+            self.device.frame().unwrap();
+        };
         Ok(self.device.frame().unwrap())
     }
 }

@@ -4,6 +4,7 @@ use rocket::fs::NamedFile;
 use rocket::serde::json::Json;
 use rocket::State;
 use rocket::{get, routes};
+use rocket::{Build, Rocket};
 use rocket_include_static_resources::{
     cached_static_response_handler, static_resources_initializer,
 };
@@ -59,7 +60,7 @@ async fn sighting(sightings: &State<Arc<Mutex<Vec<Sighting>>>>, id: String) -> O
         .ok()
 }
 
-pub async fn run_server(sightings: Arc<Mutex<Vec<Sighting>>>) -> () {
+pub fn server(sightings: Arc<Mutex<Vec<Sighting>>>) -> Rocket<Build> {
     let rocket = rocket::build()
         .attach(static_resources_initializer!(
             "indexjs" => "static/index.js",
@@ -73,5 +74,5 @@ pub async fn run_server(sightings: Arc<Mutex<Vec<Sighting>>>) -> () {
         )
         .mount("/", routes![index, sightings, sighting])
         .manage(sightings);
-    rocket.launch().await.unwrap()
+    rocket
 }

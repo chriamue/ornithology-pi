@@ -6,7 +6,7 @@ use ornithology_pi::{
 use std::sync::{Arc, Mutex};
 use std::{thread, time};
 
-use ornithology_pi::server::run_server;
+use ornithology_pi::server::server;
 
 struct BirdObserver {
     pub sightings: Arc<Mutex<Vec<Sighting>>>,
@@ -57,6 +57,6 @@ async fn run_detector(sightings: Arc<Mutex<Vec<Sighting>>>) -> () {
 async fn main() {
     let sightings: Arc<Mutex<Vec<Sighting>>> = Arc::new(Mutex::new(Vec::new()));
     let detector_thread = tokio::spawn(run_detector(sightings.clone()));
-    let server_thread = tokio::spawn(run_server(sightings.clone()));
-    tokio::join!(detector_thread, server_thread);
+    server(sightings.clone()).launch().await.unwrap();
+    detector_thread.abort();
 }
