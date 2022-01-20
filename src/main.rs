@@ -57,6 +57,7 @@ async fn run_detector(sightings: Arc<Mutex<Vec<Sighting>>>) -> () {
 async fn main() {
     let sightings: Arc<Mutex<Vec<Sighting>>> = Arc::new(Mutex::new(Vec::new()));
     let detector_thread = tokio::spawn(run_detector(sightings.clone()));
-    server(sightings.clone()).launch().await.unwrap();
+    let launcher = server(sightings.clone());
+    launcher.launch().await.unwrap();
     detector_thread.abort();
 }

@@ -1,7 +1,4 @@
-use futures::channel::mpsc::{channel, Sender};
-use std::{collections::HashSet, time::Duration};
-use uuid::Uuid;
-
+use crate::Sighting;
 use bluster::{
     gatt::{
         characteristic, characteristic::Characteristic, descriptor, descriptor::Descriptor,
@@ -9,16 +6,27 @@ use bluster::{
     },
     Peripheral, SdpShortUuid,
 };
+use futures::channel::mpsc::{channel, Sender};
+use std::sync::{Arc, Mutex};
+use std::{collections::HashSet, time::Duration};
+use uuid::Uuid;
 
 pub struct Bluetooth {
     name: String,
     timeout: Duration,
     sender_characteristic: Sender<Event>,
     sender_descriptor: Sender<Event>,
+    sightings: Arc<Mutex<Vec<Sighting>>>,
 }
 
 impl Default for Bluetooth {
     fn default() -> Self {
+        Self::new(Arc::new(Mutex::new(Vec::new())))
+    }
+}
+
+impl Bluetooth {
+    pub fn new(sightings: Arc<Mutex<Vec<Sighting>>>) -> Self {
         let (sender_characteristic, _) = channel(1);
         let (sender_descriptor, _) = channel(1);
 
@@ -27,11 +35,10 @@ impl Default for Bluetooth {
             timeout: Duration::from_secs(60),
             sender_characteristic,
             sender_descriptor,
+            sightings,
         }
     }
-}
 
-impl Bluetooth {
     pub async fn peripheral(&self) -> Peripheral {
         let peripheral = Peripheral::new().await.unwrap();
         peripheral

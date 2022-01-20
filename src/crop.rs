@@ -10,6 +10,7 @@ pub struct Crop {
     threashold: f32,
     class: usize,
     border: u32,
+    yolo: Yolo,
 }
 
 impl Crop {
@@ -39,8 +40,7 @@ impl Crop {
     }
 
     pub fn detect(&self, image: &DynamicImage) -> Vec<Detection> {
-        let yolo = Yolo::default();
-        let detections = yolo.detect_objects(&Box::new(image.clone())).unwrap();
+        let detections = self.yolo.detect_objects(&Box::new(image.clone())).unwrap();
 
         let class_detections: Vec<Detection> = detections
             .iter()
@@ -60,6 +60,7 @@ impl Default for Crop {
             threashold: THREASHOLD,
             class: BIRD_CLASS,
             border: BORDER,
+            yolo: Yolo::default()
         }
     }
 }
