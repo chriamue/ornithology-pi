@@ -1,7 +1,7 @@
 use ornithology_pi::{detector::Detector, BirdDetector};
 use ornithology_pi::{
     observer::{Observable, Observer},
-    DataSighting, Sighting,
+    Bluetooth, DataSighting, Sighting,
 };
 use std::sync::{Arc, Mutex};
 use std::{thread, time};
@@ -53,11 +53,19 @@ async fn run_detector(sightings: Arc<Mutex<Vec<Sighting>>>) -> () {
     }
 }
 
+async fn run_bluetooth(sightings: Arc<Mutex<Vec<Sighting>>>) -> () {
+    let mut bluetooth = Bluetooth::new(sightings.clone());
+    bluetooth.run().await
+}
+
 #[tokio::main]
 async fn main() {
     let sightings: Arc<Mutex<Vec<Sighting>>> = Arc::new(Mutex::new(Vec::new()));
+    let bluetooth_thread = tokio::spawn(run_bluetooth(sightings.clone()));
     let detector_thread = tokio::spawn(run_detector(sightings.clone()));
+
     let launcher = server(sightings.clone());
     launcher.launch().await.unwrap();
+    bluetooth_thread.abort();
     detector_thread.abort();
 }

@@ -60,7 +60,7 @@ impl Default for Crop {
             threashold: THREASHOLD,
             class: BIRD_CLASS,
             border: BORDER,
-            yolo: Yolo::default()
+            yolo: Yolo::default(),
         }
     }
 }

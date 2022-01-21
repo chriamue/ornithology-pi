@@ -53,3 +53,10 @@ docker build -t crossbuild:local -f crossbuild.Dockerfile .
 cross build --release --target armv7-unknown-linux-gnueabihf
 cargo deb --no-build --target armv7-unknown-linux-gnueabihf
 ```
+
+### Install on Raspberry Pi
+
+```
+wget https://github.com/chriamue/ornithology-pi/releases/latest/download/ornithology-pi.deb
+sudo apt install ./ornithology-pi.deb
+```
