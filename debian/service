@@ -1,0 +1,10 @@
+[Unit]
+Description=Ornithology-Pi
+
+[Service]
+WorkingDirectory=/var/ornithology-pi/
+Environment="ROCKET_CONFIG=/etc/ornithology-pi.toml"
+ExecStart=/usr/bin/ornithology-pi
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,3 @@
+[default.shutdown]
+ctrlc = false
+signals = ["term", "hup"]

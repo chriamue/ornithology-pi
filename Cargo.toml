@@ -36,9 +36,33 @@ tokio = { version = "1.13", features = ["full"] }
 uuid = { version = "0.8", features = ["serde", "v4"] }
 pretty_env_logger = "0.2"
 rocket = { version = "0.5.0-rc.1", features = ["json"] }
-rocket-include-static-resources = { version = "0.10.0", features=["cache"] }
+rocket-include-static-resources = { version = "0.10.0", features = ["cache"] }
 
 [package.metadata.deb]
-section = "utility"
+section = "utils"
 license-file = ["LICENSE"]
-depends = "$auto"
+depends = "libc6,libgstreamer-plugins-base1.0-0,$auto"
+assets = [
+    [
+        "target/release/ornithology-pi",
+        "usr/bin/",
+        "755",
+    ],
+    [
+        "README.md",
+        "usr/share/doc/ornithology-pi/README",
+        "644",
+    ],
+    [
+        "ornithology-pi.toml",
+        "etc/ornithology-pi.toml",
+        "644",
+    ],
+    [
+        "sightings/.gitkeep",
+        "var/ornithology-pi/sightings/.gitkeep",
+        "644",
+    ],
+]
+maintainer-scripts = "debian/"
+systemd-units = { enable = false }
