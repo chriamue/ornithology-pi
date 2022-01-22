@@ -1,18 +1,12 @@
-
 use bluer::{gatt::remote::Characteristic, AdapterEvent, Device, Result};
 use futures::{pin_mut, StreamExt};
+use ornithology_pi::bluetooth::Bluetooth::{CHARACTERISTIC_UUID, SERVICE_UUID};
 use rand::Rng;
 use std::time::Duration;
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
     time::{sleep, timeout},
 };
-
-/// Service UUID for GATT example.
-const SERVICE_UUID: uuid::Uuid = uuid::Uuid::from_u128(0xFEEDC0DE00002);
-
-/// Characteristic UUID for GATT example.
-const CHARACTERISTIC_UUID: uuid::Uuid = uuid::Uuid::from_u128(0xF00DC0DE00002);
 
 async fn find_our_characteristic(device: &Device) -> Result<Option<Characteristic>> {
     let addr = device.address();
@@ -68,7 +62,10 @@ async fn exercise_characteristic(char: &Characteristic) -> Result<()> {
     let mut write_io = char.write_io().await?;
     println!("    Obtained write IO with MTU {} bytes", write_io.mtu());
     let mut notify_io = char.notify_io().await?;
-    println!("    Obtained notification IO with MTU {} bytes", notify_io.mtu());
+    println!(
+        "    Obtained notification IO with MTU {} bytes",
+        notify_io.mtu()
+    );
 
     // Flush notify buffer.
     let mut buf = [0; 1024];
@@ -155,9 +152,10 @@ async fn main() -> bluer::Result<()> {
 
     {
         println!(
-            "Discovering on Bluetooth adapter {} with address {}\n",
+            "Discovering on Bluetooth adapter {} with address {} - {}\n",
             &adapter_name,
-            adapter.address().await?
+            adapter.address().await?,
+            &SERVICE_UUID
         );
         let discover = adapter.discover_devices().await?;
         pin_mut!(discover);

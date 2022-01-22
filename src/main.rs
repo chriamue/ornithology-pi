@@ -1,14 +1,14 @@
-use std::sync::{Arc, Mutex};
-use std::{thread, time};
+#[cfg(feature = "bluetooth")]
+use ornithology_pi::bluetooth::run_bluetooth;
+#[cfg(feature = "server")]
+use ornithology_pi::server::server;
 use ornithology_pi::{detector::Detector, BirdDetector};
 use ornithology_pi::{
     observer::{Observable, Observer},
     DataSighting, Sighting,
 };
-#[cfg(feature = "bluetooth")]
-use ornithology_pi::Bluetooth;
-#[cfg(feature = "server")]
-use ornithology_pi::server::server;
+use std::sync::{Arc, Mutex};
+use std::{thread, time};
 
 struct BirdObserver {
     pub sightings: Arc<Mutex<Vec<Sighting>>>,
@@ -53,12 +53,6 @@ async fn run_detector(sightings: Arc<Mutex<Vec<Sighting>>>) -> () {
         birddetector.detect_next();
         thread::sleep(seconds);
     }
-}
-
-#[cfg(feature = "bluetooth")]
-async fn run_bluetooth(sightings: Arc<Mutex<Vec<Sighting>>>) -> () {
-    let mut bluetooth = Bluetooth::new(sightings.clone());
-    bluetooth.run().await.unwrap()
 }
 
 #[tokio::main]

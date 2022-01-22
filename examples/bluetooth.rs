@@ -1,7 +1,9 @@
-use ornithology_pi::Bluetooth;
+use ornithology_pi::{bluetooth::run_bluetooth, Sighting};
+use std::sync::{Arc, Mutex};
 
 #[tokio::main]
 async fn main() {
-    let mut bluetooth = Bluetooth::default();
-    bluetooth.run().await.unwrap();
+    let sightings: Vec<Sighting> = vec![Sighting::new("Unknown".to_string())];
+    let sightings: Arc<Mutex<Vec<Sighting>>> = Arc::new(Mutex::new(sightings));
+    run_bluetooth(sightings).await.unwrap();
 }
