@@ -1,16 +1,15 @@
 <template>
   <div id="app">
-    <BLE />
-    blabla
+    <BLEDeviceList />
   </div>
 </template>
 
 <script>
-import BLE from "./components/BLE.vue";
+import BLEDeviceList from "./components/BLEDeviceList.vue";
 export default {
   name: "App",
   components: {
-    BLE,
+    BLEDeviceList,
   },
 };
 </script>
