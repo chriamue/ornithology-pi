@@ -1,12 +1,12 @@
 use bluer::{gatt::remote::Characteristic, AdapterEvent, Device, Result};
 use futures::{pin_mut, StreamExt};
-use ornithology_pi::bluetooth::Bluetooth::{CHARACTERISTIC_UUID, SERVICE_UUID};
-use rand::Rng;
-use std::time::Duration;
-use tokio::{
-    io::{AsyncReadExt, AsyncWriteExt},
-    time::{sleep, timeout},
+use ornithology_pi::{
+    bluetooth::{CHARACTERISTIC_UUID, SERVICE_UUID},
+    Sighting,
 };
+use std::str;
+use std::time::Duration;
+use tokio::time::sleep;
 
 async fn find_our_characteristic(device: &Device) -> Result<Option<Characteristic>> {
     let addr = device.address();
@@ -59,86 +59,20 @@ async fn find_our_characteristic(device: &Device) -> Result<Option<Characteristi
 }
 
 async fn exercise_characteristic(char: &Characteristic) -> Result<()> {
-    let mut write_io = char.write_io().await?;
-    println!("    Obtained write IO with MTU {} bytes", write_io.mtu());
-    let mut notify_io = char.notify_io().await?;
-    println!(
-        "    Obtained notification IO with MTU {} bytes",
-        notify_io.mtu()
-    );
+    println!("    Characteristic flags: {:?}", char.flags().await?);
+    sleep(Duration::from_secs(1)).await;
 
-    // Flush notify buffer.
-    let mut buf = [0; 1024];
-    while let Ok(Ok(_)) = timeout(Duration::from_secs(1), notify_io.read(&mut buf)).await {}
+    if char.flags().await?.read {
+        println!("    Reading characteristic value");
+        let value = char.read().await?;
+        println!("    Read value: {:x?}", &value);
 
-    let mut rng = rand::thread_rng();
-    for i in 0..1024 {
-        let mut len = rng.gen_range(0..20000);
-
-        // Try to trigger packet reordering over EATT.
-        if i % 10 == 0 {
-            // Big packet is split into multiple small packets.
-            // (by L2CAP layer, because GATT MTU is bigger than L2CAP MTU)
-            len = write_io.mtu(); // 512
-        }
-        if i % 10 == 1 {
-            // Small packet can use different L2CAP channel when EATT is enabled.
-            len = 20;
-        }
-        // Thus small packet can arrive before big packet.
-        // The solution is to disable EATT in /etc/bluetooth/main.conf.
-
-        println!("    Test iteration {} with data size {}", i, len);
-        let data: Vec<u8> = (0..len).map(|_| rng.gen()).collect();
-
-        // We must read back the data while sending, otherwise the connection
-        // buffer will overrun and we will lose data.
-        let read_task = tokio::spawn(async move {
-            let mut echo_buf = vec![0u8; len];
-            let res = match notify_io.read_exact(&mut echo_buf).await {
-                Ok(_) => Ok(echo_buf),
-                Err(err) => Err(err),
-            };
-            (notify_io, res)
-        });
-
-        // Note that write_all will automatically split the buffer into
-        // multiple writes of MTU size.
-        write_io.write_all(&data).await.expect("write failed");
-
-        println!("    Waiting for echo");
-        let (notify_io_back, res) = read_task.await.unwrap();
-        notify_io = notify_io_back;
-        let echo_buf = res.expect("read failed");
-
-        if echo_buf != data {
-            println!();
-            println!("Echo data mismatch!");
-            println!("Send data:     {:x?}", &data);
-            println!("Received data: {:x?}", &echo_buf);
-            println!();
-            println!("By 512 blocks:");
-            for (sent, recv) in data.chunks(512).zip(echo_buf.chunks(512)) {
-                println!();
-                println!(
-                    "Send: {:x?} ... {:x?}",
-                    &sent[0..4.min(sent.len())],
-                    &sent[sent.len().saturating_sub(4)..]
-                );
-                println!(
-                    "Recv: {:x?} ... {:x?}",
-                    &recv[0..4.min(recv.len())],
-                    &recv[recv.len().saturating_sub(4)..]
-                );
-            }
-            println!();
-
-            panic!("echoed data does not match sent data");
-        }
-        println!("    Data matches");
+        let value = str::from_utf8(&value).unwrap();
+        let sightings: Vec<Sighting> = serde_json::from_str(value).unwrap();
+        println!("    Read value: {:?}", &sightings);
+        sleep(Duration::from_secs(1)).await;
     }
 
-    println!("    Test okay");
     Ok(())
 }
 
