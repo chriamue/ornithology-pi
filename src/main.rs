@@ -1,11 +1,13 @@
+use std::sync::{Arc, Mutex};
+use std::{thread, time};
 use ornithology_pi::{detector::Detector, BirdDetector};
 use ornithology_pi::{
     observer::{Observable, Observer},
-    Bluetooth, DataSighting, Sighting,
+    DataSighting, Sighting,
 };
-use std::sync::{Arc, Mutex};
-use std::{thread, time};
-
+#[cfg(feature = "bluetooth")]
+use ornithology_pi::Bluetooth;
+#[cfg(feature = "server")]
 use ornithology_pi::server::server;
 
 struct BirdObserver {
@@ -53,19 +55,27 @@ async fn run_detector(sightings: Arc<Mutex<Vec<Sighting>>>) -> () {
     }
 }
 
+#[cfg(feature = "bluetooth")]
 async fn run_bluetooth(sightings: Arc<Mutex<Vec<Sighting>>>) -> () {
     let mut bluetooth = Bluetooth::new(sightings.clone());
-    bluetooth.run().await
+    bluetooth.run().await.unwrap()
 }
 
 #[tokio::main]
 async fn main() {
     let sightings: Arc<Mutex<Vec<Sighting>>> = Arc::new(Mutex::new(Vec::new()));
+
+    #[cfg(feature = "bluetooth")]
     let bluetooth_thread = tokio::spawn(run_bluetooth(sightings.clone()));
     let detector_thread = tokio::spawn(run_detector(sightings.clone()));
 
-    let launcher = server(sightings.clone());
-    launcher.launch().await.unwrap();
+    #[cfg(feature = "server")]
+    {
+        let launcher = server(sightings.clone());
+        launcher.launch().await.unwrap();
+    }
+
+    #[cfg(feature = "bluetooth")]
     bluetooth_thread.abort();
     detector_thread.abort();
 }

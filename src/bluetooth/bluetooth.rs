@@ -1,35 +1,33 @@
+use std::sync::{Arc, Mutex};
 use crate::Sighting;
-use bluster::{
+use bluer::{
+    adv::Advertisement,
     gatt::{
-        characteristic,
-        characteristic::Characteristic,
-        descriptor,
-        descriptor::Descriptor,
-        event::{Event, Response},
-        service::Service,
+        local::{
+            characteristic_control, Application, Characteristic, CharacteristicControlEvent,
+            CharacteristicNotify, CharacteristicNotifyMethod, CharacteristicWrite, CharacteristicWriteMethod,
+            Service,
+        },
+        CharacteristicReader, CharacteristicWriter,
     },
-    Peripheral, SdpShortUuid,
 };
-use futures::{
-    channel::mpsc::{channel, Receiver, Sender},
-    prelude::*,
-};
-use serde_json::json;
-use std::{
-    collections::HashSet,
-    sync::{atomic, Arc, Mutex},
-    thread,
-    time::Duration,
+use futures::{future, pin_mut, StreamExt};
+use std::time::Duration;
+use tokio::{
+    io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader},
+    time::sleep,
 };
 use uuid::Uuid;
+
+/// Service UUID for GATT example.
+const SERVICE_UUID: uuid::Uuid = uuid::Uuid::from_u128(0xFEEDC0DE00002);
+
+/// Characteristic UUID for GATT example.
+const CHARACTERISTIC_UUID: uuid::Uuid = uuid::Uuid::from_u128(0xF00DC0DE00002);
 
 pub struct Bluetooth {
     name: String,
     timeout: Duration,
-    sender_characteristic: Sender<Event>,
-    receiver_characteristic: Receiver<Event>,
-    sender_descriptor: Sender<Event>,
-    receiver_descriptor: Receiver<Event>,
     sightings: Arc<Mutex<Vec<Sighting>>>,
 }
 
@@ -41,169 +39,118 @@ impl Default for Bluetooth {
 
 impl Bluetooth {
     pub fn new(sightings: Arc<Mutex<Vec<Sighting>>>) -> Self {
-        let (sender_characteristic, receiver_characteristic) = channel(1);
-        let (sender_descriptor, receiver_descriptor) = channel(1);
-
         Self {
             name: "ornithology-pi".to_string(),
             timeout: Duration::from_secs(60),
-            sender_characteristic,
-            receiver_characteristic,
-            sender_descriptor,
-            receiver_descriptor,
             sightings,
         }
     }
 
-    pub async fn peripheral(&self) -> Peripheral {
-        let peripheral = Peripheral::new().await.unwrap();
-        peripheral
-            .add_service(&Service::new(
-                Uuid::from_sdp_short_uuid(0x1234 as u16),
-                true,
-                self.characteristics(),
-            ))
-            .unwrap();
-        peripheral
-    }
-
-    pub fn characteristics(&self) -> HashSet<Characteristic> {
-        let mut characteristics: HashSet<Characteristic> = HashSet::new();
-        characteristics.insert(Characteristic::new(
-            Uuid::from_sdp_short_uuid(0x2A3D as u16),
-            characteristic::Properties::new(
-                Some(characteristic::Read(characteristic::Secure::Insecure(
-                    self.sender_characteristic.clone(),
-                ))),
-                Some(characteristic::Write::WithResponse(
-                    characteristic::Secure::Insecure(self.sender_characteristic.clone()),
-                )),
-                Some(self.sender_characteristic.clone()),
-                None,
-            ),
-            None,
-            {
-                let mut descriptors = HashSet::<Descriptor>::new();
-                descriptors.insert(Descriptor::new(
-                    Uuid::from_sdp_short_uuid(0x2A3D as u16),
-                    descriptor::Properties::new(
-                        Some(descriptor::Read(descriptor::Secure::Insecure(
-                            self.sender_descriptor.clone(),
-                        ))),
-                        Some(descriptor::Write(descriptor::Secure::Insecure(
-                            self.sender_descriptor.clone(),
-                        ))),
-                    ),
-                    None,
-                ));
-                descriptors
-            },
-        ));
-        characteristics
-    }
-
-    pub async fn run(&mut self) {
-        let peripheral = self.peripheral().await;
-
-        peripheral
-            .add_service(&Service::new(
-                Uuid::from_sdp_short_uuid(0x1234 as u16),
-                true,
-                self.characteristics(),
-            ))
-            .unwrap();
-
-        let characteristic_handler = async {
-            let notifying = Arc::new(atomic::AtomicBool::new(false));
-            while let Some(event) = self.receiver_characteristic.next().await {
-                match event {
-                    Event::ReadRequest(read_request) => {
-                        println!(
-                            "GATT server got a read request with offset {}!",
-                            read_request.offset
-                        );
-                        let value = {
-                            let count = self.sightings.lock().unwrap().len();
-                            format!("{}", count)
-                        };
-                        read_request
-                            .response
-                            .send(Response::Success(value.clone().into()))
-                            .unwrap();
-                        println!("GATT server responded with \"{}\"", value);
+    pub async fn run(&mut self) -> bluer::Result<()> {
+        let session = bluer::Session::new().await?;
+        let adapter_names = session.adapter_names().await?;
+        let adapter_name = adapter_names.first().expect("No Bluetooth adapter present");
+        let adapter = session.adapter(adapter_name)?;
+        adapter.set_powered(true).await?;
+    
+        println!("Advertising on Bluetooth adapter {} with address {}", &adapter_name, adapter.address().await?);
+        let le_advertisement = Advertisement {
+            service_uuids: vec![SERVICE_UUID].into_iter().collect(),
+            discoverable: Some(true),
+            local_name: Some(self.name.to_string()),
+            ..Default::default()
+        };
+        let adv_handle = adapter.advertise(le_advertisement).await?;
+    
+        println!("Serving GATT echo service on Bluetooth adapter {}", &adapter_name);
+        let (char_control, char_handle) = characteristic_control();
+        let app = Application {
+            services: vec![Service {
+                uuid: SERVICE_UUID,
+                primary: true,
+                characteristics: vec![Characteristic {
+                    uuid: CHARACTERISTIC_UUID,
+                    write: Some(CharacteristicWrite {
+                        write_without_response: true,
+                        method: CharacteristicWriteMethod::Io,
+                        ..Default::default()
+                    }),
+                    notify: Some(CharacteristicNotify {
+                        notify: true,
+                        method: CharacteristicNotifyMethod::Io,
+                        ..Default::default()
+                    }),
+                    control_handle: char_handle,
+                    ..Default::default()
+                }],
+                ..Default::default()
+            }],
+            ..Default::default()
+        };
+        let app_handle = adapter.serve_gatt_application(app).await?;
+    
+        println!("Echo service ready. Press enter to quit.");
+        let stdin = BufReader::new(tokio::io::stdin());
+        let mut lines = stdin.lines();
+    
+        let mut read_buf = Vec::new();
+        let mut reader_opt: Option<CharacteristicReader> = None;
+        let mut writer_opt: Option<CharacteristicWriter> = None;
+        pin_mut!(char_control);
+    
+        loop {
+            tokio::select! {
+                _ = lines.next_line() => break,
+                evt = char_control.next() => {
+                    match evt {
+                        Some(CharacteristicControlEvent::Write(req)) => {
+                            println!("Accepting write request event with MTU {}", req.mtu());
+                            read_buf = vec![0; req.mtu()];
+                            reader_opt = Some(req.accept()?);
+                        },
+                        Some(CharacteristicControlEvent::Notify(notifier)) => {
+                            println!("Accepting notify request event with MTU {}", notifier.mtu());
+                            writer_opt = Some(notifier);
+                        },
+                        None => break,
                     }
-                    Event::WriteRequest(_) => {}
-                    Event::NotifySubscribe(notify_subscribe) => {
-                        println!("GATT server got a notify subscription!");
-                        let notifying = Arc::clone(&notifying);
-                        notifying.store(true, atomic::Ordering::Relaxed);
-                        thread::spawn(move || {
-                            let mut count = 0;
-                            loop {
-                                if !(&notifying).load(atomic::Ordering::Relaxed) {
-                                    break;
-                                };
-                                count += 1;
-                                println!("GATT server notifying \"hi {}\"!", count);
-                                notify_subscribe
-                                    .clone()
-                                    .notification
-                                    .try_send(format!("hi {}", count).into())
-                                    .unwrap();
-                                thread::sleep(Duration::from_secs(2));
+                },
+                read_res = async {
+                    match &mut reader_opt {
+                        Some(reader) if writer_opt.is_some() => reader.read(&mut read_buf).await,
+                        _ => future::pending().await,
+                    }
+                } => {
+                    match read_res {
+                        Ok(0) => {
+                            println!("Read stream ended");
+                            reader_opt = None;
+                        }
+                        Ok(n) => {
+                            let value = read_buf[..n].to_vec();
+                            println!("Echoing {} bytes: {:x?} ... {:x?}", value.len(), &value[0..4.min(value.len())], &value[value.len().saturating_sub(4) ..]);
+                            if value.len() < 512 {
+                                println!();
                             }
-                        });
+                            if let Err(err) = writer_opt.as_mut().unwrap().write_all(&value).await {
+                                println!("Write failed: {}", &err);
+                                writer_opt = None;
+                            }
+                        }
+                        Err(err) => {
+                            println!("Read stream error: {}", &err);
+                            reader_opt = None;
+                        }
                     }
-                    Event::NotifyUnsubscribe => {
-                        println!("GATT server got a notify unsubscribe!");
-                        notifying.store(false, atomic::Ordering::Relaxed);
-                    }
-                };
+                }
             }
-        };
-
-        let descriptor_handler = async {
-            while let Some(event) = self.receiver_descriptor.next().await {
-                match event {
-                    Event::ReadRequest(read_request) => {
-                        println!(
-                            "GATT server got a read request with offset {}!",
-                            read_request.offset
-                        );
-                        let value = {
-                            let count = self.sightings.lock().unwrap();
-                            json!(count.clone()).to_string()
-                        };
-                        read_request
-                            .response
-                            .send(Response::Success(value.clone().into()))
-                            .unwrap();
-                        println!("GATT server responded with \"{}\"", value);
-                    }
-                    Event::WriteRequest(_) => {}
-                    _ => panic!("Event not supported for Descriptors!"),
-                };
-            }
-        };
-
-        let name = self.name.clone();
-        let timeout = self.timeout.clone();
-        let main_fut = async move {
-            while !peripheral.is_powered().await.unwrap() {}
-            println!("Peripheral powered on");
-            peripheral.register_gatt().await.unwrap();
-            peripheral
-                .start_advertising(&name.clone(), &[])
-                .await
-                .unwrap();
-            println!("Peripheral started advertising");
-            let ad_check = async { while !peripheral.is_advertising().await.unwrap() {} };
-            let timeout = tokio::time::sleep(timeout.clone());
-            futures::join!(ad_check, timeout);
-            peripheral.stop_advertising().await.unwrap();
-            while peripheral.is_advertising().await.unwrap() {}
-            println!("Peripheral stopped advertising");
-        };
-        futures::join!(characteristic_handler, descriptor_handler, main_fut);
+        }
+    
+        println!("Removing service and advertisement");
+        drop(app_handle);
+        drop(adv_handle);
+        sleep(Duration::from_secs(1)).await;
+    
+        Ok(())
     }
 }
