@@ -23,10 +23,12 @@ impl Crop {
             .map(|detection| {
                 let bbox = Yolo::scale(width, height, &detection.bbox);
                 let mut crop_img = image.clone();
+                let x = 0.max(bbox.left() - self.border as i32) as u32;
+                let y = 0.max(bbox.top() - self.border as i32) as u32;
                 let cropped = imageops::crop(
                     &mut crop_img,
-                    bbox.left() as u32 - self.border,
-                    bbox.top() as u32 - self.border,
+                    x,
+                    y,
                     bbox.width() as u32 + 2 * self.border,
                     bbox.height() as u32 + 2 * self.border,
                 );

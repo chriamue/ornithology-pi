@@ -4,28 +4,65 @@ use nokhwa::Camera;
 use nokhwa::CameraFormat;
 use nokhwa::FrameFormat;
 use std::error::Error;
+use std::sync::{Arc, Mutex};
+use std::thread;
+use std::time::Duration;
 
 use super::Capture;
-use crate::errors::NoDevice;
 
 pub struct WebCam {
-    pub device: Camera,
+    frame: Arc<Mutex<ImageBuffer<Rgb<u8>, Vec<u8>>>>,
+    running: Arc<Mutex<bool>>,
 }
 
 impl WebCam {
     pub fn new(width: u32, height: u32) -> Result<Self, Box<dyn Error>> {
-        match Camera::new(
-            0,
-            Some(CameraFormat::new_from(
-                width,
-                height,
-                FrameFormat::MJPEG,
-                30,
-            )),
-        ) {
-            Ok(camera) => Ok(Self { device: camera }),
-            _ => Err(NoDevice.into()),
+        let frame = Arc::new(Mutex::new(ImageBuffer::new(width, height)));
+        let running = Arc::new(Mutex::new(false));
+
+        let mut webcam = Self { frame, running };
+        webcam.start();
+        Ok(webcam)
+    }
+
+    fn capture(device: &mut Camera, frame: Arc<Mutex<ImageBuffer<Rgb<u8>, Vec<u8>>>>) {
+        if !device.is_stream_open() {
+            device.open_stream().unwrap();
         }
+        let new_frame = device.frame().unwrap();
+        *frame.lock().unwrap() = new_frame;
+    }
+
+    pub fn start(&mut self) {
+        let width = self.frame.lock().unwrap().width();
+        let height = self.frame.lock().unwrap().height();
+        let running = self.running.clone();
+        let frame = self.frame.clone();
+
+        thread::spawn(move || {
+            let mut camera = Camera::new(
+                0,
+                Some(CameraFormat::new_from(
+                    width,
+                    height,
+                    FrameFormat::MJPEG,
+                    30,
+                )),
+            )
+            .unwrap();
+            *running.lock().unwrap() = true;
+            loop {
+                if *running.lock().unwrap() == false {
+                    break;
+                }
+                Self::capture(&mut camera, frame.clone());
+                thread::sleep(Duration::from_millis(20));
+            }
+        });
+    }
+
+    pub fn stop(&mut self) {
+        *self.running.lock().unwrap() = false;
     }
 }
 
@@ -37,13 +74,7 @@ impl Default for WebCam {
 
 impl Capture for WebCam {
     fn frame(&mut self) -> Result<ImageBuffer<Rgb<u8>, Vec<u8>>, Box<dyn Error>> {
-        if !self.device.is_stream_open() {
-            self.device.open_stream().unwrap();
-        }
-        for _ in 0..30 {
-            self.device.frame().unwrap();
-        }
-        Ok(self.device.frame().unwrap())
+        Ok(self.frame.lock().unwrap().clone())
     }
 }
 
@@ -56,6 +87,6 @@ mod tests {
     fn default() {
         let mut capture = WebCam::default();
         assert!(capture.frame().is_ok());
-        assert!(capture.frame().unwrap().width() == 640);
+        assert!(capture.frame().unwrap().width() == 1920);
     }
 }
