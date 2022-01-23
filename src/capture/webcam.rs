@@ -56,7 +56,7 @@ impl WebCam {
             .unwrap();
             *running.lock().unwrap() = true;
             loop {
-                if *running.lock().unwrap() == false {
+                if !(*running.lock().unwrap()) {
                     break;
                 }
                 Self::capture(&mut camera, frame.clone());
@@ -85,7 +85,7 @@ impl Capture for WebCam {
 impl Stream for WebCam {
     type Item = ImageBuffer<Rgb<u8>, Vec<u8>>;
     fn poll_next(mut self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
-        if *self.running.lock().unwrap() == true {
+        if *self.running.lock().unwrap() {
             Poll::Ready(Some(self.frame().unwrap()))
         } else {
             Poll::Ready(None)
@@ -107,6 +107,7 @@ mod tests {
         assert!(capture.frame().unwrap().width() == 1920);
     }
 
+    #[ignore]
     #[tokio::test]
     async fn stream_started() {
         let mut webcam = WebCam::default();

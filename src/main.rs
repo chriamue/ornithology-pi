@@ -39,12 +39,10 @@ impl Observer for BirdObserver {
     }
 }
 
-async fn run_detector(sightings: Arc<Mutex<Vec<Sighting>>>) -> () {
+async fn run_detector(sightings: Arc<Mutex<Vec<Sighting>>>) {
     let capture: Arc<Mutex<dyn Capture<Item = ImageBuffer<Rgb<u8>, Vec<u8>>>>> =
         Arc::new(Mutex::new(WebCam::default()));
-    let observer = BirdObserver {
-        sightings: sightings,
-    };
+    let observer = BirdObserver { sightings };
 
     let mut birddetector = BirdDetector::new(capture);
 
@@ -61,7 +59,7 @@ async fn run_detector(sightings: Arc<Mutex<Vec<Sighting>>>) -> () {
 #[tokio::main]
 async fn main() {
     let sightings: Arc<Mutex<Vec<Sighting>>> = Arc::new(Mutex::new(Vec::new()));
-    let capture: Arc<Mutex<dyn Capture<Item = ImageBuffer<Rgb<u8>, Vec<u8>>>>> =
+    let _capture: Arc<Mutex<dyn Capture<Item = ImageBuffer<Rgb<u8>, Vec<u8>>>>> =
         Arc::new(Mutex::new(WebCam::default()));
 
     #[cfg(feature = "bluetooth")]

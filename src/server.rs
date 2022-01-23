@@ -50,7 +50,7 @@ fn sightings(sightings: &State<Arc<Mutex<Vec<Sighting>>>>) -> Json<Vec<Sighting>
 fn webcam() -> Custom<ByteStream![Vec<u8>]> {
     let mut capture = WebCam::default();
 
-    let response = Custom(
+    Custom(
         ContentType::with_params("multipart", "x-mixed-replace", ("boundary", "frame")),
         ByteStream! {
             let mut interval = time::interval(Duration::from_millis(50));
@@ -64,22 +64,18 @@ fn webcam() -> Custom<ByteStream![Vec<u8>]> {
                 yield data
             }
         },
-    );
-    response
+    )
 }
 
 #[get("/sightings/<id>")]
 async fn sighting(sightings: &State<Arc<Mutex<Vec<Sighting>>>>, id: String) -> Option<NamedFile> {
     let filename = {
         let sightings = sightings.lock().unwrap();
-        let sighting = match sightings
+        let sighting = sightings
             .iter()
             .filter(|sighting| sighting.uuid == id)
             .last()
-        {
-            Some(sighting) => Some(sighting.clone()),
-            _ => None,
-        };
+            .cloned();
         let sighting = sighting.unwrap();
         format!("{}_{}.jpg", sighting.species, sighting.uuid)
     };
@@ -90,7 +86,7 @@ async fn sighting(sightings: &State<Arc<Mutex<Vec<Sighting>>>>, id: String) -> O
 }
 
 pub fn server(sightings: Arc<Mutex<Vec<Sighting>>>) -> Rocket<Build> {
-    let rocket = rocket::build()
+    rocket::build()
         .attach(static_resources_initializer!(
             "indexjs" => "static/index.js",
             "indexcss" => "static/index.css",
@@ -102,6 +98,5 @@ pub fn server(sightings: Arc<Mutex<Vec<Sighting>>>) -> Rocket<Build> {
             routes![cached_indexjs, cached_indexcss, cached_favicon],
         )
         .mount("/", routes![index, sightings, sighting, webcam])
-        .manage(sightings);
-    rocket
+        .manage(sightings)
 }

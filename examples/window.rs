@@ -40,7 +40,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         window: detector_window,
     }));
 
-    let frame = birddetector.capture.frame().unwrap();
+    let frame = birddetector.capture.lock().unwrap().frame().unwrap();
     println!("{}, {}", frame.width(), frame.height());
     frame.save("frame.jpg").unwrap();
 
@@ -58,7 +58,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             if event.input.key_code == Some(event::VirtualKeyCode::Space)
                 && event.input.state.is_pressed()
             {
-                let frame = birddetector.capture.frame().unwrap();
+                let frame = birddetector.capture.lock().unwrap().frame().unwrap();
                 let frame = imageops::resize(&frame, 640, 480, imageops::FilterType::Triangle);
                 let image = ImageView::new(ImageInfo::rgb8(640, 480), &frame);
                 window.set_image("image-001", image)?;

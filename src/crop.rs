@@ -32,10 +32,7 @@ impl Crop {
                     bbox.width() as u32 + 2 * self.border,
                     bbox.height() as u32 + 2 * self.border,
                 );
-                (
-                    detection.clone(),
-                    DynamicImage::ImageRgba8(cropped.to_image()),
-                )
+                (*detection, DynamicImage::ImageRgba8(cropped.to_image()))
             })
             .collect();
         detections
@@ -50,7 +47,7 @@ impl Crop {
                 detection.class == self.class && detection.confidence > self.threashold
             })
             .clone()
-            .map(|d| d.clone())
+            .copied()
             .collect();
         class_detections
     }
@@ -82,7 +79,7 @@ mod tests {
 
         let crop = Crop::default();
         let detections = crop.crop(crop_img);
-        assert!(detections.len() > 0);
+        assert!(!detections.is_empty());
         assert!(detections[0].1.width() < width);
         assert!(detections[0].1.height() < height);
     }
