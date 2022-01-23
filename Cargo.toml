@@ -11,13 +11,15 @@ repository = "https://github.com/chriamue/ornithology-pi"
 [features]
 default = ["bluetooth", "server", "window", "nokhwa/input-gst"]
 bluetooth = ["bluer"]
-server = ["rocket", "rocket-include-static-resources"]
+server = ["base64", "rocket", "rocket-include-static-resources"]
 window = ["show-image/image"]
 
 [dependencies]
 async-trait = "0.1"
+base64 = { version = "0.13.0", optional = true }
 bluer = { version = "0.13.1", optional = true }
 chrono = "0.4"
+format-bytes = "0.1"
 image = { version = "0.23.14", default-features = false, features = [
     "png",
     "jpeg",
@@ -45,7 +47,7 @@ rocket-include-static-resources = { version = "0.10.0", features = [
 [package.metadata.deb]
 section = "utils"
 license-file = ["LICENSE"]
-depends = "libc6,libgstreamer-plugins-base1.0-0,$auto"
+depends = "libc6,libgstreamer-plugins-base1.0-0,gstreamer1.0-plugins-good,$auto"
 assets = [
     [
         "target/release/ornithology-pi",

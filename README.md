@@ -56,6 +56,14 @@ cargo deb --no-build --target armv7-unknown-linux-gnueabihf
 
 ### Install on Raspberry Pi
 
+You need some rerequirements:
+
+```
+sudo apt install gstreamer1.0-plugins-good
+```
+
+Now download and install.
+
 ```
 wget https://github.com/chriamue/ornithology-pi/releases/latest/download/ornithology-pi.deb
 sudo apt install ./ornithology-pi.deb

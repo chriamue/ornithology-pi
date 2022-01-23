@@ -1,3 +1,4 @@
+use image::{ImageBuffer, Rgb};
 #[cfg(feature = "bluetooth")]
 use ornithology_pi::bluetooth::run_bluetooth;
 #[cfg(feature = "server")]
@@ -5,7 +6,7 @@ use ornithology_pi::server::server;
 use ornithology_pi::{detector::Detector, BirdDetector};
 use ornithology_pi::{
     observer::{Observable, Observer},
-    DataSighting, Sighting,
+    Capture, DataSighting, Sighting, WebCam,
 };
 use std::sync::{Arc, Mutex};
 use std::{thread, time};
@@ -39,11 +40,13 @@ impl Observer for BirdObserver {
 }
 
 async fn run_detector(sightings: Arc<Mutex<Vec<Sighting>>>) -> () {
+    let capture: Arc<Mutex<dyn Capture<Item = ImageBuffer<Rgb<u8>, Vec<u8>>>>> =
+        Arc::new(Mutex::new(WebCam::default()));
     let observer = BirdObserver {
         sightings: sightings,
     };
 
-    let mut birddetector = BirdDetector::default();
+    let mut birddetector = BirdDetector::new(capture);
 
     birddetector.register(Box::new(observer));
 
@@ -58,6 +61,8 @@ async fn run_detector(sightings: Arc<Mutex<Vec<Sighting>>>) -> () {
 #[tokio::main]
 async fn main() {
     let sightings: Arc<Mutex<Vec<Sighting>>> = Arc::new(Mutex::new(Vec::new()));
+    let capture: Arc<Mutex<dyn Capture<Item = ImageBuffer<Rgb<u8>, Vec<u8>>>>> =
+        Arc::new(Mutex::new(WebCam::default()));
 
     #[cfg(feature = "bluetooth")]
     let bluetooth_thread = tokio::spawn(run_bluetooth(sightings.clone()));

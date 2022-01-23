@@ -1,10 +1,14 @@
+use futures::Stream;
 use image::ImageBuffer;
 use image::Rgb;
 use nokhwa::Camera;
 use nokhwa::CameraFormat;
 use nokhwa::FrameFormat;
 use std::error::Error;
+use std::pin::Pin;
 use std::sync::{Arc, Mutex};
+use std::task::Context;
+use std::task::Poll;
 use std::thread;
 use std::time::Duration;
 
@@ -56,7 +60,7 @@ impl WebCam {
                     break;
                 }
                 Self::capture(&mut camera, frame.clone());
-                thread::sleep(Duration::from_millis(20));
+                thread::sleep(Duration::from_millis(30));
             }
         });
     }
@@ -78,8 +82,21 @@ impl Capture for WebCam {
     }
 }
 
+impl Stream for WebCam {
+    type Item = ImageBuffer<Rgb<u8>, Vec<u8>>;
+    fn poll_next(mut self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
+        if *self.running.lock().unwrap() == true {
+            Poll::Ready(Some(self.frame().unwrap()))
+        } else {
+            Poll::Ready(None)
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    use futures::StreamExt;
+
     use super::*;
 
     #[ignore]
@@ -88,5 +105,24 @@ mod tests {
         let mut capture = WebCam::default();
         assert!(capture.frame().is_ok());
         assert!(capture.frame().unwrap().width() == 1920);
+    }
+
+    #[tokio::test]
+    async fn stream_started() {
+        let mut webcam = WebCam::default();
+        let stream = webcam.next().await;
+        assert!(stream.is_none());
+        thread::sleep(Duration::from_millis(1000));
+        let stream = webcam.next().await;
+        assert!(stream.is_some());
+    }
+
+    #[tokio::test]
+    async fn stream_stopped() {
+        let frame = Arc::new(Mutex::new(ImageBuffer::new(1, 1)));
+        let running = Arc::new(Mutex::new(false));
+        let mut webcam = WebCam { frame, running };
+        let stream = webcam.next().await;
+        assert!(stream.is_none());
     }
 }

@@ -1,11 +1,12 @@
 use crate::observer::{Observable, Observer};
 use crate::{Capture, Crop, DataSighting, Label, Sighting, WebCam};
-use image::DynamicImage;
+use image::{DynamicImage, ImageBuffer, Rgb};
+use std::sync::{Arc, Mutex};
 
 use super::Detector;
 
 pub struct BirdDetector {
-    pub capture: Box<dyn Capture>,
+    pub capture: Arc<Mutex<dyn Capture<Item = ImageBuffer<Rgb<u8>, Vec<u8>>>>>,
     pub crop: Crop,
     pub label: Label,
     pub subscribers: Vec<Box<dyn Observer>>,
@@ -14,14 +15,20 @@ pub struct BirdDetector {
 unsafe impl Send for BirdDetector {}
 unsafe impl Sync for BirdDetector {}
 
-impl Default for BirdDetector {
-    fn default() -> Self {
+impl BirdDetector {
+    pub fn new(capture: Arc<Mutex<dyn Capture<Item = ImageBuffer<Rgb<u8>, Vec<u8>>>>>) -> Self {
         Self {
-            capture: Box::new(WebCam::default()),
+            capture,
             crop: Crop::default(),
             label: Label::default(),
             subscribers: Vec::new(),
         }
+    }
+}
+
+impl Default for BirdDetector {
+    fn default() -> Self {
+        Self::new(Arc::new(Mutex::new(WebCam::default())))
     }
 }
 
@@ -37,7 +44,7 @@ impl Observable for BirdDetector {
 
 impl Detector for BirdDetector {
     fn detect_next(&mut self) {
-        let frame = self.capture.frame().unwrap();
+        let frame = self.capture.lock().unwrap().frame().unwrap();
         let crop_img = DynamicImage::ImageRgb8(frame.clone());
         let detections = self.crop.crop(crop_img);
         if detections.len() > 0 {

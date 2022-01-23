@@ -1,6 +1,11 @@
 use crate::BirdDetector;
-use crate::Sighting;
+use crate::{Capture, Sighting, WebCam};
+use format_bytes::format_bytes;
+use image::{DynamicImage, ImageBuffer, Rgb};
 use rocket::fs::NamedFile;
+use rocket::http::ContentType;
+use rocket::response::content::Custom;
+use rocket::response::stream::ByteStream;
 use rocket::serde::json::Json;
 use rocket::State;
 use rocket::{get, routes};
@@ -11,6 +16,8 @@ use rocket_include_static_resources::{
 use rocket_include_static_resources::{EtagIfNoneMatch, StaticContextManager, StaticResponse};
 use std::path::Path;
 use std::sync::{Arc, Mutex};
+use std::time::Duration;
+use tokio::time;
 
 cached_static_response_handler! {
     259_200;
@@ -37,6 +44,28 @@ fn sightings(sightings: &State<Arc<Mutex<Vec<Sighting>>>>) -> Json<Vec<Sighting>
     let sightings = sightings.lock().unwrap();
     let sightings = sightings.to_vec();
     Json(sightings)
+}
+
+#[get("/webcam")]
+fn webcam() -> Custom<ByteStream![Vec<u8>]> {
+    let mut capture = WebCam::default();
+
+    let response = Custom(
+        ContentType::with_params("multipart", "x-mixed-replace", ("boundary", "frame")),
+        ByteStream! {
+            let mut interval = time::interval(Duration::from_millis(50));
+            loop {
+                interval.tick();
+                let base_img: ImageBuffer<Rgb<u8>, Vec<u8>> = capture.frame().unwrap();
+                let base_img: DynamicImage = DynamicImage::ImageRgb8(base_img);
+                let mut buf = vec![];
+                base_img.write_to(&mut buf, image::ImageOutputFormat::Jpeg(60));
+                let data = format_bytes!(b"\r\n--frame\r\nContent-Type: image/jpeg\r\n\r\n{}", &buf);
+                yield data
+            }
+        },
+    );
+    response
 }
 
 #[get("/sightings/<id>")]
@@ -72,7 +101,7 @@ pub fn server(sightings: Arc<Mutex<Vec<Sighting>>>) -> Rocket<Build> {
             "/",
             routes![cached_indexjs, cached_indexcss, cached_favicon],
         )
-        .mount("/", routes![index, sightings, sighting])
+        .mount("/", routes![index, sightings, sighting, webcam])
         .manage(sightings);
     rocket
 }
