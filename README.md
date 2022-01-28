@@ -68,3 +68,10 @@ Now download and install.
 wget https://github.com/chriamue/ornithology-pi/releases/latest/download/ornithology-pi.deb
 sudo apt install ./ornithology-pi.deb
 ```
+
+#### Iptables
+
+```
+sudo iptables -t nat -A PREROUTING -s 10.42.0.0/24 -p tcp --dport 80 -j DNAT --to-destination 127.0.0.1:8000
+sudo iptables -t nat -A POSTROUTING -s 10.42.0.0/24 -j MASQUERADE
+```

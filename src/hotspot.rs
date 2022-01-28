@@ -3,6 +3,7 @@ use wifi_rs::{prelude::*, WiFi};
 
 pub struct Hotspot {
     wifi: WiFi,
+    interface: String,
 }
 
 impl Default for Hotspot {
@@ -10,7 +11,7 @@ impl Default for Hotspot {
         let interface = datalink::interfaces()
             .into_iter()
             .filter(|iface: &NetworkInterface| iface.name.starts_with("w"))
-            .next()
+            .last()
             .unwrap();
 
         let config = Some(Config {
@@ -18,6 +19,7 @@ impl Default for Hotspot {
         });
         Hotspot {
             wifi: WiFi::new(config),
+            interface: interface.name,
         }
     }
 }
@@ -32,5 +34,6 @@ impl Hotspot {
 
     pub fn stop(&mut self) {
         self.wifi.stop_hotspot().unwrap();
+        println!("stopped interface {}", self.interface)
     }
 }

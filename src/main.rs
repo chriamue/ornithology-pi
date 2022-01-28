@@ -1,5 +1,7 @@
 #[cfg(feature = "bluetooth")]
 use ornithology_pi::bluetooth::l2cap_srv::run_bluetooth;
+#[cfg(feature = "hotspot")]
+use ornithology_pi::hotspot::Hotspot;
 #[cfg(feature = "server")]
 use ornithology_pi::server::server;
 use ornithology_pi::{detector::Detector, BirdDetector};
@@ -62,6 +64,10 @@ async fn main() {
     let bluetooth_thread = tokio::spawn(run_bluetooth(sightings.clone()));
     let detector_thread = tokio::spawn(run_detector(sightings.clone(), capture.clone()));
 
+    #[cfg(feature = "hotspot")]
+    let mut hotspot = Hotspot::default();
+    #[cfg(feature = "hotspot")]
+    hotspot.start();
     #[cfg(feature = "server")]
     {
         let launcher = server(sightings.clone(), capture.clone());
@@ -71,4 +77,7 @@ async fn main() {
     #[cfg(feature = "bluetooth")]
     bluetooth_thread.abort();
     detector_thread.abort();
+
+    #[cfg(feature = "hotspot")]
+    hotspot.stop();
 }

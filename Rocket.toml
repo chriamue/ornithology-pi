@@ -1,3 +1,7 @@
 [default.shutdown]
 ctrlc = false
 signals = ["term", "hup"]
+
+[release]
+port = 8000
+address = "0.0.0.0"

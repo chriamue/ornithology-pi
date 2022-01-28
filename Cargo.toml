@@ -9,7 +9,7 @@ readme = "README.md"
 repository = "https://github.com/chriamue/ornithology-pi"
 
 [features]
-default = ["bluetooth", "hotspot", "server", "window", "nokhwa/input-gst"]
+default = ["bluetooth", "server", "window", "nokhwa/input-gst"]
 bluetooth = ["bluer"]
 hotspot = ["wifi-rs"]
 server = ["base64", "rocket", "rocket-include-static-resources"]

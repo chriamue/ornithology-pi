@@ -1,7 +1,7 @@
 use crate::BirdDetector;
 use crate::{MJpeg, Sighting, WebCam};
 use rocket::fs::NamedFile;
-use rocket::http::ContentType;
+use rocket::http::{ContentType, Status};
 use rocket::response::content::Custom;
 use rocket::response::stream::ByteStream;
 use rocket::serde::json::Json;
@@ -33,6 +33,11 @@ fn index(
 #[derive(Clone)]
 pub struct DetectorState {
     pub mutex: Arc<Mutex<BirdDetector>>,
+}
+
+#[get("/generate_204")]
+fn generate_204() -> Status {
+    Status::NoContent
 }
 
 #[get("/sightings")]
@@ -99,7 +104,10 @@ pub fn server(sightings: Arc<Mutex<Vec<Sighting>>>, capture: Arc<Mutex<WebCam>>)
             "/",
             routes![cached_indexjs, cached_indexcss, cached_favicon],
         )
-        .mount("/", routes![index, sightings, sighting, webcam])
+        .mount(
+            "/",
+            routes![index, sightings, sighting, webcam, generate_204],
+        )
         .manage(sightings)
         .manage(capture)
 }
