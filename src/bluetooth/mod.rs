@@ -1,4 +1,4 @@
-use crate::Sighting;
+use crate::{sighting, Sighting};
 use bluer::{
     adv::Advertisement,
     l2cap::{SocketAddr, Stream, StreamListener, PSM_LE_DYN_START},
@@ -40,13 +40,8 @@ async fn handle_connection(
         println!("Write failed: {}", &err);
     }
 
-    let mut n = 0;
     loop {
-        n += 1;
-
-        // Vary buffer size between MTU and smaller value to test
-        // partial reads.
-        let buf_size = if n % 5 == 0 { recv_mtu - 70 } else { recv_mtu };
+        let buf_size = recv_mtu;
         let mut buf = vec![0; buf_size as _];
 
         let n = match stream.read(&mut buf).await {
@@ -82,6 +77,22 @@ async fn handle_connection(
                     len as u64
                 };
                 let response = serde_json::to_vec(&Message::CountResponse { count }).unwrap();
+                if let Err(err) = stream.write_all(&response).await {
+                    println!("Write failed: {}", &err);
+                    continue;
+                }
+            }
+            Ok(Message::LastRequest) => {
+                let sighting = {
+                    let mutex = sightings.lock().unwrap();
+                    let last = mutex.last();
+
+                    last.unwrap().clone()
+                };
+                let response = serde_json::to_vec(&Message::LastResponse {
+                    last: sighting.clone(),
+                })
+                .unwrap();
                 if let Err(err) = stream.write_all(&response).await {
                     println!("Write failed: {}", &err);
                     continue;
