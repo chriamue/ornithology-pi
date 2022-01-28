@@ -1,5 +1,5 @@
 #[cfg(feature = "bluetooth")]
-use ornithology_pi::bluetooth::run_bluetooth;
+use ornithology_pi::bluetooth::l2cap_srv::run_bluetooth;
 #[cfg(feature = "server")]
 use ornithology_pi::server::server;
 use ornithology_pi::{detector::Detector, BirdDetector};

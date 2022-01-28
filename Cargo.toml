@@ -9,8 +9,9 @@ readme = "README.md"
 repository = "https://github.com/chriamue/ornithology-pi"
 
 [features]
-default = ["bluetooth", "server", "window", "nokhwa/input-gst"]
+default = ["bluetooth", "hotspot", "server", "window", "nokhwa/input-gst"]
 bluetooth = ["bluer"]
+hotspot = ["wifi-rs"]
 server = ["base64", "rocket", "rocket-include-static-resources"]
 window = ["show-image/image"]
 
@@ -41,6 +42,7 @@ serde_json = "1.0"
 show-image = { version = "0.10.1", optional = true }
 
 uuid = { version = "0.8", features = ["serde", "v4"] }
+pnet = "0.29.0"
 pretty_env_logger = "0.2"
 rocket = { version = "0.5.0-rc.1", features = ["json"], optional = true }
 rocket-include-static-resources = { version = "0.10.0", features = [
@@ -53,6 +55,7 @@ tokio-serde = { version = "0.8", features = [
     "json",
     "messagepack",
 ] }
+wifi-rs = { git = "https://github.com/tnkemdilim/wifi-rs.git", optional = true }
 
 [package.metadata.deb]
 section = "utils"

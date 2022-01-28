@@ -20,6 +20,9 @@ pub mod observer;
 
 #[cfg(feature = "bluetooth")]
 pub mod bluetooth;
+
+#[cfg(feature = "hotspot")]
+pub mod hotspot;
 #[cfg(feature = "server")]
 pub mod server;
 

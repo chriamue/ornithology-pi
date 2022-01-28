@@ -1,4 +1,4 @@
-use ornithology_pi::{bluetooth::run_bluetooth, Sighting};
+use ornithology_pi::{bluetooth::l2cap_srv::run_bluetooth, Sighting};
 use std::sync::{Arc, Mutex};
 
 #[tokio::main]
