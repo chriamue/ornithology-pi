@@ -1,14 +1,17 @@
-use bluer::{gatt::remote::Characteristic, AdapterEvent, Device, Result};
+use bluer::{AdapterEvent, Device, Result};
+use bluer::{
+    l2cap::{SocketAddr, Stream}, AddressType,
+};
 use futures::{pin_mut, StreamExt};
 use ornithology_pi::{
-    bluetooth::{CHARACTERISTIC_UUID, SERVICE_UUID},
-    Sighting,
+    bluetooth::{PSM, SERVICE_UUID},
 };
-use std::str;
+
 use std::time::Duration;
+use tokio::io::AsyncWriteExt;
 use tokio::time::sleep;
 
-async fn find_our_characteristic(device: &Device) -> Result<Option<Characteristic>> {
+async fn find_our_service(device: &Device) -> Result<Option<()>> {
     let addr = device.address();
     let uuids = device.uuids().await?.unwrap_or_default();
     println!("Discovered device {} with service UUIDs {:?}", addr, &uuids);
@@ -41,39 +44,13 @@ async fn find_our_characteristic(device: &Device) -> Result<Option<Characteristi
             println!("    Service UUID: {}", &uuid);
             if uuid == SERVICE_UUID {
                 println!("    Found our service!");
-                for char in service.characteristics().await? {
-                    let uuid = char.uuid().await?;
-                    println!("    Characteristic UUID: {}", &uuid);
-                    if uuid == CHARACTERISTIC_UUID {
-                        println!("    Found our characteristic!");
-                        return Ok(Some(char));
-                    }
-                }
+                return Ok(Some(()));
             }
         }
-
         println!("    Not found!");
     }
 
     Ok(None)
-}
-
-async fn exercise_characteristic(char: &Characteristic) -> Result<()> {
-    println!("    Characteristic flags: {:?}", char.flags().await?);
-    sleep(Duration::from_secs(1)).await;
-
-    if char.flags().await?.read {
-        println!("    Reading characteristic value");
-        let value = char.read().await?;
-        println!("    Read value: {:x?}", &value);
-
-        let value = str::from_utf8(&value).unwrap();
-        let sightings: Vec<Sighting> = serde_json::from_str(value).unwrap();
-        println!("    Read value: {:?}", &sightings);
-        sleep(Duration::from_secs(1)).await;
-    }
-
-    Ok(())
 }
 
 #[tokio::main]
@@ -93,21 +70,26 @@ async fn main() -> bluer::Result<()> {
         );
         let discover = adapter.discover_devices().await?;
         pin_mut!(discover);
-        let mut done = false;
         while let Some(evt) = discover.next().await {
             match evt {
                 AdapterEvent::DeviceAdded(addr) => {
                     let device = adapter.device(addr)?;
-                    match find_our_characteristic(&device).await {
-                        Ok(Some(char)) => match exercise_characteristic(&char).await {
-                            Ok(()) => {
-                                println!("    Characteristic exercise completed");
-                                done = true;
-                            }
-                            Err(err) => {
-                                println!("    Characteristic exercise failed: {}", &err);
-                            }
-                        },
+                    match find_our_service(&device).await {
+                        Ok(Some(())) => {
+                            let target_sa =
+                                SocketAddr::new(device.address(), AddressType::LePublic, PSM);
+                            println!("Connecting to {:?}", &target_sa);
+                            let mut stream =
+                                Stream::connect(target_sa).await.expect("connection failed");
+                            println!("Local address: {:?}", stream.as_ref().local_addr()?);
+                            println!("Remote address: {:?}", stream.peer_addr()?);
+                            println!("Send MTU: {:?}", stream.as_ref().send_mtu());
+                            println!("Recv MTU: {}", stream.as_ref().recv_mtu()?);
+                            println!("Security: {:?}", stream.as_ref().security()?);
+                            println!("Flow control: {:?}", stream.as_ref().flow_control());
+                            const HELLO_MSG: &[u8] = b"Hello from l2cap_server!";
+                            stream.write_all(HELLO_MSG).await.unwrap();
+                        }
                         Ok(None) => (),
                         Err(err) => {
                             println!("    Device failed: {}", &err);
@@ -124,9 +106,6 @@ async fn main() -> bluer::Result<()> {
                     println!("Device removed {}", addr);
                 }
                 _ => (),
-            }
-            if done {
-                break;
             }
         }
         println!("Stopping discovery");

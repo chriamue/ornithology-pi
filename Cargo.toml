@@ -16,10 +16,15 @@ window = ["show-image/image"]
 
 [dependencies]
 async-trait = "0.1"
+atoi = "1.0.0"
 base64 = { version = "0.13.0", optional = true }
-bluer = { version = "0.13.1", optional = true }
+bluer = { version = "0.13", optional = true }
+bytes = "1.1.0"
 chrono = "0.4"
 format-bytes = "0.1"
+
+futures = "0.3"
+
 image = { version = "0.23.14", default-features = false, features = [
     "png",
     "jpeg",
@@ -35,14 +40,19 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 show-image = { version = "0.10.1", optional = true }
 
-futures = "0.3"
-tokio = { version = "1.13", features = ["full"] }
 uuid = { version = "0.8", features = ["serde", "v4"] }
 pretty_env_logger = "0.2"
 rocket = { version = "0.5.0-rc.1", features = ["json"], optional = true }
 rocket-include-static-resources = { version = "0.10.0", features = [
     "cache",
 ], optional = true }
+tokio = { version = "1.13", features = ["full"] }
+tokio-serde = { version = "0.8", features = [
+    "bincode",
+    "cbor",
+    "json",
+    "messagepack",
+] }
 
 [package.metadata.deb]
 section = "utils"

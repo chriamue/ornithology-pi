@@ -3,7 +3,7 @@ use image::imageops;
 #[cfg(feature = "window")]
 use ornithology_pi::{
     observer::{Observable, Observer},
-    DataSighting,
+    Capture, DataSighting,
 };
 use show_image::WindowProxy;
 #[cfg(feature = "window")]
