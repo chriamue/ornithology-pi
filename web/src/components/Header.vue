@@ -1,6 +1,6 @@
 <template>
   <div class="header">
-    <h1>Ornothology PI</h1>
+    <h1>Ornithology PI</h1>
   </div>
 </template>
 <script>

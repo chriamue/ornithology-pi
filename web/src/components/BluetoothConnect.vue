@@ -1,6 +1,8 @@
 <template>
   <div>
-    <button @click="search" title="Connect to your Ornithology PI">Connect via Bluetooth</button>
+    <button @click="search" title="Connect to your Ornithology PI">
+      Connect via Bluetooth
+    </button>
   </div>
 </template>
 
@@ -10,13 +12,16 @@ export default {
   components: {},
   data() {
     return {
-      services: [0x1234],
+      services: ['00000000-0000-0000-000f-00dc0de00001'],
     };
   },
   methods: {
     search() {
       navigator.bluetooth
-        .requestDevice({ filters: [{ name: "ornithology-pi" }] })
+        .requestDevice({
+          filters: [{services: this.services}/*{ name: "ornithology-pi" }*/],
+          //optionalServices: this.services,
+        })
         .then((device) => {
           console.log(device.name);
           console.log(device);
@@ -25,7 +30,8 @@ export default {
         })
         .then((server) => {
           console.log(server);
-          //return server.getPrimaryService(0x1234)
+          server.getPrimaryServices().then(console.log);
+          return server.getPrimaryService(this.services[0]);
         }) /*
         .then((service) => service.getCharacteristic("measurement_interval"))
         .then((characteristic) =>
