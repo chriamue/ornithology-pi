@@ -1,13 +1,12 @@
 <template>
   <div>
-    <h1>Bluetooth Devices</h1>
-    <button @click="search">Search</button>
+    <button @click="search" title="Connect to your Ornithology PI">Connect via Bluetooth</button>
   </div>
 </template>
 
 <script>
 export default {
-  name: "BLEDeviceList",
+  name: "BluetoothConnect",
   components: {},
   data() {
     return {
@@ -17,19 +16,17 @@ export default {
   methods: {
     search() {
       navigator.bluetooth
-        .requestDevice({ filters: [
-          //{ services: ['00000000-0000-0000-000f-eedc0de00002']},
-          { name: "ornithology-pi" }] })
+        .requestDevice({ filters: [{ name: "ornithology-pi" }] })
         .then((device) => {
           console.log(device.name);
           console.log(device);
-          
+
           return device.gatt.connect();
         })
         .then((server) => {
           console.log(server);
           //return server.getPrimaryService(0x1234)
-        })/*
+        }) /*
         .then((service) => service.getCharacteristic("measurement_interval"))
         .then((characteristic) =>
           characteristic.getDescriptor("gatt.characteristic_user_description")

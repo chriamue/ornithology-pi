@@ -1,15 +1,25 @@
 <template>
   <div id="app">
-    <BLEDeviceList />
+    <Header />
+    <About />
+    <BluetoothConnect />
+    <Footer />
   </div>
 </template>
 
 <script>
-import BLEDeviceList from "./components/BLEDeviceList.vue";
+import About from "./components/About.vue";
+import BluetoothConnect from "./components/BluetoothConnect.vue";
+import Footer from "./components/Footer.vue";
+import Header from "./components/Header.vue";
+
 export default {
   name: "App",
   components: {
-    BLEDeviceList,
+    About,
+    BluetoothConnect,
+    Footer,
+    Header,
   },
 };
 </script>
