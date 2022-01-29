@@ -1,5 +1,5 @@
 #[cfg(feature = "bluetooth")]
-use ornithology_pi::bluetooth::l2cap_srv::run_bluetooth;
+use ornithology_pi::bluetooth::run_bluetooth;
 #[cfg(feature = "hotspot")]
 use ornithology_pi::hotspot::Hotspot;
 #[cfg(feature = "server")]

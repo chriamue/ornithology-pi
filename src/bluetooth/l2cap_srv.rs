@@ -14,10 +14,10 @@ use tokio::{
 };
 
 use super::Message;
+use super::MANUFACTURER_ID;
 
-pub const SERVICE_UUID: uuid::Uuid = uuid::Uuid::from_u128(0xF00DC0DE00002);
+pub const SERVICE_UUID: uuid::Uuid = uuid::Uuid::from_u128(0xF00DC0DE00001);
 pub const CHARACTERISTIC_UUID: uuid::Uuid = uuid::Uuid::from_u128(0xF00DC0DE00002);
-pub const MANUFACTURER_ID: u16 = 0xf00d;
 pub const PSM: u16 = PSM_LE_DYN_START + 5;
 
 async fn handle_connection(
@@ -110,7 +110,7 @@ async fn handle_connection(
     println!("{} disconnected", &addr.addr);
 }
 
-pub async fn run_bluetooth(sightings: Arc<Mutex<Vec<Sighting>>>) -> bluer::Result<()> {
+pub async fn run(sightings: Arc<Mutex<Vec<Sighting>>>) -> bluer::Result<()> {
     let session = bluer::Session::new().await?;
     let adapter_names = session.adapter_names().await?;
     let adapter_name = adapter_names.first().expect("No Bluetooth adapter present");
