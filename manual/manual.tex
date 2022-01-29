@@ -1,0 +1,131 @@
+\documentclass[12pt,letterpaper]{article}
+
+\title{Ornithology PI}
+
+%% To translate this poster, change the language 
+%% option for both babel and translator package.
+%% (Don't worry when you get an 'unknown language'
+%% error; just click 'recompile from scratch' at the
+%% bottom of the error message window.
+\usepackage[english]{babel}
+\usepackage[english]{translator}
+
+%% Then add your own OverleafPoster-<lang>.dict file
+%% and provide your translations, based on the 
+%% default OverleafPoster-English.dict.
+\usedictionary{OverleafPoster}
+
+%% For example, change "english" to "ngerman", 
+%% for babel and translator above, and see what
+%% happens. ;-) 
+%% Note that the provided OverleafPoster-German.dict
+%% contains dummy data!
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[sfdefault,lf]{carlito}
+
+\usepackage[margin=1.1cm,letterpaper]{geometry}
+\usepackage{multicol}
+\usepackage{ragged2e}
+\usepackage{tabularx}
+\usepackage[table]{xcolor}
+\usepackage{graphicx}
+\usepackage{fontawesome5}
+\usepackage{qrcode}
+
+\definecolor{OverleafGreen}{HTML}{4F9C45}
+\graphicspath{{images/}}
+\pagestyle{empty}
+\RaggedRight
+\parskip=12pt plus 4pt
+
+\begin{document}
+
+{\fontsize{40pt}{42pt}\bfseries\selectfont\color{OverleafGreen}%
+\translate{Ornithology PI}%
+\par}
+
+\begin{multicols}{2}
+
+{\LARGE\bfseries%
+\mbox{\faIcon{github} chriamue/ornithology-pi\par}%
+}
+\par
+
+{\Large%
+\translate{}%
+\par}
+
+%\includegraphics[width=\linewidth]{OL_Editor_Screenshot}
+
+\columnbreak
+\setlength{\leftskip}{40pt}
+{\centering%
+%\includegraphics[width=.55\linewidth]{Overleaf_Challenge_Logo}%
+\par}
+
+% \vskip -\baselineskip
+
+\translate{What Is It}\par
+It's a device with a camera, that saves images if a bird is detected.
+The species of the wird will be identified.
+
+\end{multicols}
+
+\vskip -\baselineskip
+
+\hskip -1.1cm%
+\renewcommand{\arraystretch}{1.8}%
+\begin{tabularx}{\paperwidth}{%
+   @{} p{1.5cm} @{}
+   *4{>{\centering\arraybackslash\large\bfseries}X @{}}
+   p{1.5cm} @{}
+}
+\rowcolor{gray!30}
+\rule{0pt}{2.2cm} & 
+ \faIcon{tree} & \faIcon{wifi} & \faIcon{tv} & \faIcon{crow} & \\[0.1cm]
+%\includegraphics[height=1.8cm]{green_light_bulb} &
+%\includegraphics[height=1.8cm]{projector_screen} &
+%\includegraphics[height=1.8cm]{Globe_Mouse} &
+%\includegraphics[height=1.8cm]{pencil-308509} & \\
+& \translate{place} & \translate{connect} & \translate{watch} & \translate{identify} & \\
+\end{tabularx}
+
+
+\begin{large}
+\faIcon{wifi} 
+\translate{(1) Connect to Wifi} \par
+
+Connect to wifi \textbf{ornithology-pi} using password \textbf{ornithology}.
+
+\qrcode{
+Network Name: ornithology-pi
+Type: WPA
+Password: ornithology
+}
+
+\faIcon{chrome}
+\translate{(2) Visit Web Page}\par
+
+Visit the url \textbf{http://10.42.0.1:8000}.
+
+\qrcode{
+http://10.42.0.1:8000
+}
+
+\faIcon{crow}
+\translate{(3) Identify}\par
+
+Now you can watch the livestream.
+
+In the list the detected birds will be listed with tagged species.
+
+\end{large}
+
+\vfill
+
+\includegraphics[width=2cm]{logo}
+\hfill
+{\LARGE\bfseries\itshape\color{OverleafGreen} https://github.com/chriamue/ornithology-pi}
+\end{document}
