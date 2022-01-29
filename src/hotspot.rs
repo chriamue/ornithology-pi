@@ -30,10 +30,11 @@ impl Hotspot {
         self.wifi
             .create_hotspot("ornithology-pi", "ornithology", Some(&config))
             .unwrap();
+        println!("started hotspot on interface {}", self.interface)
     }
 
     pub fn stop(&mut self) {
         self.wifi.stop_hotspot().unwrap();
-        println!("stopped interface {}", self.interface)
+        println!("stopped hotspot on interface {}", self.interface)
     }
 }

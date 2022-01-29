@@ -2,10 +2,17 @@ var images = document.getElementById("images");
 
 function load_images(sightings) {
   sightings.forEach(function (bird, _b) {
+    var div = document.createElement("div");
+
+    var h3 = document.createElement("h3");
+    h3.innerText = bird.species;
     var img = document.createElement("img");
     img.src = "/sightings/" + bird.uuid;
     img.title = bird.species;
-    images.appendChild(img);
+
+    div.appendChild(h3);
+    div.appendChild(img);
+    images.appendChild(div);
   });
 }
 
@@ -19,4 +26,4 @@ function fetch_sightings() {
   });
 }
 
-fetch_sightings().then(sightings => load_images(sightings));
+fetch_sightings().then((sightings) => load_images(sightings));
