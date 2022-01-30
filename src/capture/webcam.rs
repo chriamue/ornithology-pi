@@ -15,16 +15,25 @@ use std::time::Duration;
 use super::Capture;
 
 pub struct WebCam {
+    width: u32,
+    height: u32,
+    fps: u32,
     frame: Arc<Mutex<ImageBuffer<Rgb<u8>, Vec<u8>>>>,
     running: Arc<Mutex<bool>>,
 }
 
 impl WebCam {
-    pub fn new(width: u32, height: u32) -> Result<Self, Box<dyn Error>> {
+    pub fn new(width: u32, height: u32, fps: u32) -> Result<Self, Box<dyn Error>> {
         let frame = Arc::new(Mutex::new(ImageBuffer::new(width, height)));
         let running = Arc::new(Mutex::new(false));
 
-        let mut webcam = Self { frame, running };
+        let mut webcam = Self {
+            width,
+            height,
+            fps,
+            frame,
+            running,
+        };
         webcam.start();
         Ok(webcam)
     }
@@ -38,8 +47,9 @@ impl WebCam {
     }
 
     pub fn start(&mut self) {
-        let width = self.frame.lock().unwrap().width();
-        let height = self.frame.lock().unwrap().height();
+        let width = self.width;
+        let height = self.height;
+        let fps = self.fps;
         let running = self.running.clone();
         let frame = self.frame.clone();
 
@@ -50,7 +60,7 @@ impl WebCam {
                     width,
                     height,
                     FrameFormat::MJPEG,
-                    30,
+                    fps,
                 )),
             )
             .unwrap();
@@ -72,7 +82,7 @@ impl WebCam {
 
 impl Default for WebCam {
     fn default() -> Self {
-        Self::new(1920, 1080).unwrap()
+        Self::new(1920, 1080, 30).unwrap()
     }
 }
 

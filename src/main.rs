@@ -1,5 +1,6 @@
 #[cfg(feature = "bluetooth")]
 use ornithology_pi::bluetooth::run_bluetooth;
+use ornithology_pi::config;
 #[cfg(feature = "hotspot")]
 use ornithology_pi::hotspot::Hotspot;
 #[cfg(feature = "server")]
@@ -59,8 +60,15 @@ async fn run_detector(sightings: Arc<Mutex<Vec<Sighting>>>, capture: Arc<Mutex<W
 
 #[tokio::main]
 async fn main() {
+    let config = config::load_config();
     let sightings: Arc<Mutex<Vec<Sighting>>> = Arc::new(Mutex::new(Vec::new()));
-    let capture: Arc<Mutex<WebCam>> = Arc::new(Mutex::new(WebCam::default()));
+    let capture: Arc<Mutex<WebCam>> = Arc::new(Mutex::new(WebCam::new(
+        config.camera.width.clone(),
+        config.camera.height.clone(),
+        config.camera.fps.clone(),
+    ).unwrap()));
+
+    println!("Loaded Config: {:?}", config);
 
     #[cfg(feature = "bluetooth")]
     let bluetooth_thread = tokio::spawn(run_bluetooth(sightings.clone()));

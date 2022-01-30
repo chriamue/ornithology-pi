@@ -6,6 +6,10 @@ pub use detector::BirdDetector;
 pub mod capture;
 pub use capture::Capture;
 pub use capture::WebCam;
+
+pub mod config;
+pub use config::Config;
+
 pub mod mjpeg;
 pub use mjpeg::MJpeg;
 
