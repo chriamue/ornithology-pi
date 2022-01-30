@@ -1,3 +1,4 @@
+#[cfg(feature = "detect")]
 use crate::BirdDetector;
 use crate::{MJpeg, Sighting, WebCam};
 use rocket::fs::NamedFile;
@@ -32,6 +33,7 @@ fn index(
 
 #[derive(Clone)]
 pub struct DetectorState {
+    #[cfg(feature = "detect")]
     pub mutex: Arc<Mutex<BirdDetector>>,
 }
 

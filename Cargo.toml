@@ -9,11 +9,22 @@ readme = "README.md"
 repository = "https://github.com/chriamue/ornithology-pi"
 
 [features]
-default = ["bluetooth", "server", "window", "nokhwa/input-gst"]
+default = ["server", "camera"]
+full = ["bluetooth", "camera", "detect", "hotspot", "server"]
+pi = ["bluetooth", "camera", "detect", "server"]
 bluetooth = ["bluer"]
+camera = ["nokhwa/input-gst"]
 hotspot = ["wifi-rs"]
 server = ["base64", "rocket", "rocket-include-static-resources"]
 window = ["show-image/image"]
+detect = [
+    "camera",
+    "lenna_core",
+    "lenna_core",
+    "lenna_birds_plugin",
+    "lenna_yolo_plugin",
+    "tract-onnx",
+]
 
 [dependencies]
 async-trait = "0.1"
@@ -31,11 +42,11 @@ image = { version = "0.23.14", default-features = false, features = [
     "jpeg",
 ] }
 imageproc = { version = "0.22", default-features = false }
-lenna_core = { git = "https://github.com/lenna-project/lenna-core", branch = "main" }
-lenna_yolo_plugin = { git = "https://github.com/lenna-project/yolo-plugin", branch = "main", default-features = false }
-lenna_birds_plugin = { git = "https://github.com/lenna-project/birds-plugin", branch = "main", default-features = false }
+lenna_core = { git = "https://github.com/lenna-project/lenna-core", branch = "main", optional = true }
+lenna_birds_plugin = { git = "https://github.com/lenna-project/birds-plugin", branch = "main", default-features = false, optional = true }
+lenna_yolo_plugin = { git = "https://github.com/lenna-project/yolo-plugin", branch = "main", default-features = false, optional = true }
 nokhwa = { version = "0.9.4", features = ["input-gst"] }
-tract-onnx = { git = "https://github.com/sonos/tract.git", branch = "main" }
+tract-onnx = { git = "https://github.com/sonos/tract.git", branch = "main", optional = true }
 
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
@@ -85,3 +96,34 @@ assets = [
 ]
 maintainer-scripts = "debian/"
 systemd-units = { enable = false }
+
+############# Examples ####
+
+[[example]]
+name = "window"
+required-features = ["detect", "window"]
+
+[[example]]
+name = "label"
+required-features = ["detect"]
+
+[[example]]
+name = "crop"
+required-features = ["detect"]
+
+[[example]]
+name = "bluetooth"
+required-features = ["bluetooth"]
+
+[[example]]
+name = "bt_client"
+required-features = ["bluetooth"]
+
+[[example]]
+name = "bt_gatt_srv"
+required-features = ["bluetooth"]
+
+[[example]]
+name = "hotspot"
+required-features = ["hotspot"]
+

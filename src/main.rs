@@ -4,6 +4,7 @@ use ornithology_pi::bluetooth::run_bluetooth;
 use ornithology_pi::hotspot::Hotspot;
 #[cfg(feature = "server")]
 use ornithology_pi::server::server;
+#[cfg(feature = "detect")]
 use ornithology_pi::{detector::Detector, BirdDetector};
 use ornithology_pi::{
     observer::{Observable, Observer},
@@ -40,6 +41,7 @@ impl Observer for BirdObserver {
     }
 }
 
+#[cfg(feature = "detect")]
 async fn run_detector(sightings: Arc<Mutex<Vec<Sighting>>>, capture: Arc<Mutex<WebCam>>) {
     let observer = BirdObserver { sightings };
 
@@ -62,6 +64,7 @@ async fn main() {
 
     #[cfg(feature = "bluetooth")]
     let bluetooth_thread = tokio::spawn(run_bluetooth(sightings.clone()));
+    #[cfg(feature = "detect")]
     let detector_thread = tokio::spawn(run_detector(sightings.clone(), capture.clone()));
 
     #[cfg(feature = "hotspot")]
@@ -76,6 +79,7 @@ async fn main() {
 
     #[cfg(feature = "bluetooth")]
     bluetooth_thread.abort();
+    #[cfg(feature = "detect")]
     detector_thread.abort();
 
     #[cfg(feature = "hotspot")]

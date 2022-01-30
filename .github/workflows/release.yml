@@ -19,7 +19,7 @@ jobs:
           toolchain: stable
       - run: cargo install cross
       - run: cargo install cargo-deb
-      - run: cross build --release --target armv7-unknown-linux-gnueabihf
+      - run: cross build --features=pi --release --target armv7-unknown-linux-gnueabihf
       - run: ls
       - run: ls target
       - run: ls target/armv7-unknown-linux-gnueabihf
