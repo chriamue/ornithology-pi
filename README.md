@@ -1,6 +1,8 @@
 # OrnithologyPi
 Capture birds in your garden, running on raspberry pi.
 
+![Overview](https://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/chriamue/ornithology-pi/main/docs/overview.puml)
+
 ## Quickstart
 
 ### Webcam example

@@ -20,7 +20,7 @@ jobs:
           compiler: pdflatex
           args: -interaction=nonstopmode -shell-escape
       - name: prepare folder
-        run: mkdir docs && cp manual/manual.pdf docs
+        run: mkdir -p docs && cp manual/manual.pdf docs
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
