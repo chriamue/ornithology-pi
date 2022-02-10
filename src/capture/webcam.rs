@@ -59,7 +59,7 @@ impl WebCam {
                 Some(CameraFormat::new_from(
                     width,
                     height,
-                    FrameFormat::MJPEG,
+                    FrameFormat::YUYV,
                     fps,
                 )),
             )

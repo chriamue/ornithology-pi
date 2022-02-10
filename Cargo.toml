@@ -1,6 +1,6 @@
 [package]
 name = "ornithology-pi"
-version = "0.3.0"
+version = "0.4.0"
 edition = "2021"
 authors = ["Christian <chriamue@gmail.com>"]
 description = "Capture birds in your garden, running on raspberry pi."
@@ -45,7 +45,7 @@ imageproc = { version = "0.22", default-features = false }
 lenna_core = { git = "https://github.com/lenna-project/lenna-core", branch = "main", optional = true }
 lenna_birds_plugin = { git = "https://github.com/lenna-project/birds-plugin", branch = "main", default-features = false, optional = true }
 lenna_yolo_plugin = { git = "https://github.com/lenna-project/yolo-plugin", branch = "main", default-features = false, optional = true }
-nokhwa = { version = "0.9.4", features = ["input-gst"] }
+nokhwa = { version = "0.9.4", features = ["input-v4l"] }
 tract-onnx = { git = "https://github.com/sonos/tract.git", branch = "main", optional = true }
 
 serde = { version = "1.0", features = ["derive"] }
