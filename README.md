@@ -2,6 +2,8 @@
 
 Capture birds in your garden, running on raspberry pi.
 
+[![Wichteln](https://img.youtube.com/vi/OJHczE3-kko/0.jpg)](https://www.youtube.com/watch?v=OJHczE3-kko)
+
 ![Overview](https://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/chriamue/ornithology-pi/main/docs/overview.puml)
 
 ## Quickstart
