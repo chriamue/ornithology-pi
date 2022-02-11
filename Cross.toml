@@ -1,4 +1,4 @@
 [target.armv7-unknown-linux-gnueabihf]
 # The tag name from the `docker build -t crossbuild:local -f crossbuild.Dockerfile .` command
-#image = "crossbuild:local"
+# image = "crossbuild:local"
 image = "ghcr.io/chriamue/ornithology-pi/crossbuild:latest"

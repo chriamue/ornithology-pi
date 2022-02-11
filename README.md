@@ -1,4 +1,5 @@
 # OrnithologyPi
+
 Capture birds in your garden, running on raspberry pi.
 
 ![Overview](https://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/chriamue/ornithology-pi/main/docs/overview.puml)
@@ -41,14 +42,16 @@ Press Escape to exit.
 
 ## Build Debian package
 
-```
+```sh
 cargo install cargo-deb
 cargo deb
 ```
 
 ### Build for Raspberry Pi
 
-```
+#### Crossbuild
+
+```sh
 cargo install cross
 cargo install cargo-deb
 docker build -t crossbuild:local -f crossbuild.Dockerfile .
@@ -60,20 +63,20 @@ cargo deb --no-build --target armv7-unknown-linux-gnueabihf
 
 You need some rerequirements:
 
-```
+```sh
 sudo apt install gstreamer1.0-plugins-good
 ```
 
 Now download and install.
 
-```
+```sh
 wget https://github.com/chriamue/ornithology-pi/releases/latest/download/ornithology-pi.deb
 sudo apt install ./ornithology-pi.deb
 ```
 
 #### Iptables
 
-```
+```sh
 sudo iptables -t nat -A PREROUTING -s 10.42.0.0/24 -p tcp --dport 80 -j DNAT --to-destination 127.0.0.1:8000
 sudo iptables -t nat -A POSTROUTING -s 10.42.0.0/24 -j MASQUERADE
 ```
