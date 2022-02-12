@@ -27,13 +27,12 @@ impl Sighting {
 
     pub fn save(&self, filename: &str) -> Result<(), Box<dyn Error>> {
         let mut file = std::fs::OpenOptions::new()
-            .create_new(true)
-            .write(true)
+            .create(true)
             .append(true)
             .open(filename)
             .unwrap();
 
-        file.write(format!("{}", serde_json::to_string(&self).unwrap()).as_bytes())
+        file.write(format!("{}\n", serde_json::to_string(&self).unwrap()).as_bytes())
             .expect("Unable to write file");
         Ok(())
     }

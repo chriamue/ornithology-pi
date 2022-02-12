@@ -44,8 +44,13 @@ fn generate_204() -> Status {
 
 #[get("/sightings")]
 fn sightings(sightings: &State<Arc<Mutex<Vec<Sighting>>>>) -> Json<Vec<Sighting>> {
-    let sightings = sightings.lock().unwrap();
-    let sightings = sightings.to_vec();
+    let sightings = match sightings.lock() {
+        Ok(sightings) => sightings.to_vec(),
+        Err(err) => {
+            println!("{}", err);
+            Vec::new()
+        }
+    };
     Json(sightings)
 }
 
