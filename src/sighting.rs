@@ -32,7 +32,7 @@ impl Sighting {
             .open(filename)
             .unwrap();
 
-        file.write(format!("{}\n", serde_json::to_string(&self).unwrap()).as_bytes())
+        file.write_all(format!("{}\n", serde_json::to_string(&self).unwrap()).as_bytes())
             .expect("Unable to write file");
         Ok(())
     }
@@ -68,5 +68,10 @@ mod tests {
 
         let sightings = load_from_file("test.db").unwrap();
         assert_eq!(sightings.len(), 1);
+
+        let sighting = Sighting::default();
+        sighting.save("test.db").unwrap();
+        let sightings = load_from_file("test.db").unwrap();
+        assert_eq!(sightings.len(), 2);
     }
 }

@@ -6,12 +6,10 @@ use ornithology_pi::hotspot::Hotspot;
 #[cfg(feature = "server")]
 use ornithology_pi::server::server;
 #[cfg(feature = "detect")]
-use ornithology_pi::{detector::Detector, BirdDetector};
-use ornithology_pi::{
-    observer::{Observable, Observer},
-    DataSighting, Sighting, WebCam,
-};
+use ornithology_pi::{detector::Detector, BirdDetector, observer::Observable};
+use ornithology_pi::{observer::Observer, DataSighting, Sighting, WebCam};
 use std::sync::{Arc, Mutex};
+#[cfg(feature = "detect")]
 use std::{thread, time};
 
 struct BirdObserver {
@@ -66,12 +64,7 @@ async fn main() {
         ornithology_pi::sighting::load_from_file("sightings/sightings.db").unwrap_or_default(),
     ));
     let capture: Arc<Mutex<WebCam>> = Arc::new(Mutex::new(
-        WebCam::new(
-            config.camera.width.clone(),
-            config.camera.height.clone(),
-            config.camera.fps.clone(),
-        )
-        .unwrap(),
+        WebCam::new(config.camera.width, config.camera.height, config.camera.fps).unwrap(),
     ));
 
     println!("Loaded Config: {:?}", config);
