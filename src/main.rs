@@ -30,6 +30,7 @@ impl BirdObserver {
                 sighting.0.species, sighting.0.uuid
             ))
             .unwrap();
+        sighting.0.save("sightings/sightings.db").unwrap();
     }
 }
 
@@ -61,7 +62,9 @@ async fn run_detector(sightings: Arc<Mutex<Vec<Sighting>>>, capture: Arc<Mutex<W
 #[tokio::main]
 async fn main() {
     let config = config::load_config();
-    let sightings: Arc<Mutex<Vec<Sighting>>> = Arc::new(Mutex::new(Vec::new()));
+    let sightings: Arc<Mutex<Vec<Sighting>>> = Arc::new(Mutex::new(
+        ornithology_pi::sighting::load_from_file("sightings/sightings.db").unwrap_or_default(),
+    ));
     let capture: Arc<Mutex<WebCam>> = Arc::new(Mutex::new(
         WebCam::new(
             config.camera.width.clone(),

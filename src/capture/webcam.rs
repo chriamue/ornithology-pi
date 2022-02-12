@@ -132,7 +132,13 @@ mod tests {
     async fn stream_stopped() {
         let frame = Arc::new(Mutex::new(ImageBuffer::new(1, 1)));
         let running = Arc::new(Mutex::new(false));
-        let mut webcam = WebCam { frame, running };
+        let mut webcam = WebCam {
+            width: 640,
+            height: 480,
+            fps: 5,
+            frame,
+            running,
+        };
         let stream = webcam.next().await;
         assert!(stream.is_none());
     }

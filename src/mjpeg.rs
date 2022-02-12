@@ -42,7 +42,7 @@ impl Stream for MJpeg {
         let data = format_bytes!(b"\r\n--frame\r\nContent-Type: image/jpeg\r\n\r\n{}", &buf);
         let duration = time::Instant::now() - start;
         thread::sleep(time::Duration::from_millis(
-            (FRAME_MILLIS - duration.as_millis() as u32).max(0).into(),
+            (FRAME_MILLIS as i32 - duration.as_millis() as i32).max(0) as u64,
         ));
         Poll::Ready(Some(data))
     }
