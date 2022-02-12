@@ -10,6 +10,8 @@ use std::task::Poll;
 use std::thread;
 use tokio::time;
 
+const FRAME_MILLIS: u32 = 1000 / 2;
+
 use crate::{Capture, WebCam};
 
 pub struct MJpeg {
@@ -26,7 +28,7 @@ impl Stream for MJpeg {
     type Item = Vec<u8>;
 
     fn poll_next(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
-        thread::sleep(time::Duration::from_millis(50));
+        let start = time::Instant::now();
 
         let base_img: ImageBuffer<Rgb<u8>, Vec<u8>> = {
             let mut capture = self.capture.lock().unwrap();
@@ -38,6 +40,10 @@ impl Stream for MJpeg {
             .write_to(&mut buf, image::ImageOutputFormat::Jpeg(60))
             .unwrap();
         let data = format_bytes!(b"\r\n--frame\r\nContent-Type: image/jpeg\r\n\r\n{}", &buf);
+        let duration = time::Instant::now() - start;
+        thread::sleep(time::Duration::from_millis(
+            (FRAME_MILLIS - duration.as_millis() as u32).max(0).into(),
+        ));
         Poll::Ready(Some(data))
     }
 }

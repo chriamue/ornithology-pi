@@ -55,24 +55,7 @@ fn webcam(capture: &'_ State<Arc<Mutex<WebCam>>>) -> Custom<ByteStream<MJpeg>> {
 
     Custom(
         ContentType::with_params("multipart", "x-mixed-replace", ("boundary", "frame")),
-        ByteStream(MJpeg::new(capture)), /*
-                                         ByteStream! {
-                                             let mut interval = time::interval(Duration::from_millis(50));
-                                             loop {
-                                                 interval.tick();
-
-                                                 let base_img: ImageBuffer<Rgb<u8>, Vec<u8>> = {
-                                                     let mut capture = capture.lock().unwrap();
-                                                     capture.frame().unwrap()
-                                                 };
-                                                 let base_img: DynamicImage = DynamicImage::ImageRgb8(base_img);
-                                                 let mut buf = vec![];
-                                                 base_img.write_to(&mut buf, image::ImageOutputFormat::Jpeg(60));
-                                                 let data = format_bytes!(b"\r\n--frame\r\nContent-Type: image/jpeg\r\n\r\n{}", &buf);
-                                                 yield data
-                                             }
-                                         },
-                                         */
+        ByteStream(MJpeg::new(capture)),
     )
 }
 

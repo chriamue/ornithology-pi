@@ -62,11 +62,14 @@ async fn run_detector(sightings: Arc<Mutex<Vec<Sighting>>>, capture: Arc<Mutex<W
 async fn main() {
     let config = config::load_config();
     let sightings: Arc<Mutex<Vec<Sighting>>> = Arc::new(Mutex::new(Vec::new()));
-    let capture: Arc<Mutex<WebCam>> = Arc::new(Mutex::new(WebCam::new(
-        config.camera.width.clone(),
-        config.camera.height.clone(),
-        config.camera.fps.clone(),
-    ).unwrap()));
+    let capture: Arc<Mutex<WebCam>> = Arc::new(Mutex::new(
+        WebCam::new(
+            config.camera.width.clone(),
+            config.camera.height.clone(),
+            config.camera.fps.clone(),
+        )
+        .unwrap(),
+    ));
 
     println!("Loaded Config: {:?}", config);
 
