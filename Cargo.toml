@@ -48,6 +48,7 @@ lenna_yolo_plugin = { git = "https://github.com/lenna-project/yolo-plugin", bran
 nokhwa = { version = "0.9.4", features = ["input-v4l"] }
 tract-onnx = { git = "https://github.com/sonos/tract.git", branch = "main", optional = true }
 
+rand = "0.8"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 show-image = { version = "0.10.1", optional = true }
