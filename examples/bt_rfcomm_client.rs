@@ -7,7 +7,7 @@ use ornithology_pi::bluetooth::{
     rfcomm_srv::{CHANNEL, MTU},
     Message,
 };
-use std::time::{Duration};
+use std::time::Duration;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::time::sleep;
 
@@ -28,7 +28,7 @@ pub async fn perform(address: Address, channel: u8) -> Result<()> {
     let (mut rh, mut wh) = stream.into_split();
 
     let request = serde_json::to_vec(&Message::LastRequest).unwrap();
-
+    println!("{}", serde_json::to_string(&Message::LastRequest).unwrap());
     if let Err(err) = wh.write_all(&request).await {
         println!("Write failed: {}", &err);
     }
@@ -66,7 +66,7 @@ pub async fn perform(address: Address, channel: u8) -> Result<()> {
             Ok(Message::CountResponse { count }) => {
                 println!("Counted {}", count);
                 let request = serde_json::to_vec(&Message::LastRequest).unwrap();
-
+                
                 if let Err(err) = wh.write_all(&request).await {
                     println!("Write failed: {}", &err);
                 }

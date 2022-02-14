@@ -1,10 +1,12 @@
 use crate::Sighting;
 use bluer::{
+    adv::Advertisement,
     agent::Agent,
     rfcomm::{Profile, Role, Stream},
     Address,
 };
 use futures::StreamExt;
+use std::collections::BTreeMap;
 use std::{
     sync::{Arc, Mutex},
     time::Duration,
@@ -16,6 +18,7 @@ use tokio::{
 
 use super::Message;
 
+use super::MANUFACTURER_ID;
 pub const SERVICE_UUID: uuid::Uuid = uuid::Uuid::from_u128(0xF00DC0DE00001);
 pub const CHARACTERISTIC_UUID: uuid::Uuid = uuid::Uuid::from_u128(0xF00DC0DE00002);
 pub const CHANNEL: u8 = 7;
@@ -97,6 +100,10 @@ async fn handle_connection(
                     println!("Write failed: {}", &err);
                     continue;
                 }
+                if let Err(err) = stream.write_all(&serde_json::to_vec(&'\n').unwrap()).await {
+                    println!("Write failed: {}", &err);
+                    continue;
+                }
             }
             _ => {
                 println!("Echoing {} bytes", buf.len());
@@ -131,17 +138,19 @@ pub async fn run(sightings: Arc<Mutex<Vec<Sighting>>>) -> bluer::Result<()> {
         role: Some(Role::Server),
         require_authentication: Some(false),
         require_authorization: Some(false),
+        auto_connect: Some(true),
         ..Default::default()
     };
-    let mut hndl = session.register_profile(profile).await?;
 
     eprintln!("Registered profile");
 
     println!(
-        "Advertising on Bluetooth adapter {} with address {}",
+        "Advertising on Bluetooth adapter {} with address {} and service {}",
         &adapter_name,
-        adapter.address().await?
+        adapter.address().await?,
+        profile.uuid
     );
+    let mut hndl = session.register_profile(profile).await?;
 
     println!("Listening on channel {}", CHANNEL);
 
@@ -150,9 +159,6 @@ pub async fn run(sightings: Arc<Mutex<Vec<Sighting>>>) -> bluer::Result<()> {
 
     loop {
         println!("\nWaiting for connection...");
-        //let req = hndl.next().await.expect("received no connect request");
-        //eprintln!("Connect from {}", req.device());
-
         let (mut stream, sa) = tokio::select! {
             req = hndl.next() => {
                 let req = req.expect("received no connect request");
