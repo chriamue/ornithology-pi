@@ -17,4 +17,8 @@ pub enum Message {
     LastRequest,
     #[serde(rename = "last_response")]
     LastResponse { last: Sighting },
+    #[serde(rename = "image_request")]
+    ImageRequest { uuid: String },
+    #[serde(rename = "image_response")]
+    ImageResponse { base64: String },
 }

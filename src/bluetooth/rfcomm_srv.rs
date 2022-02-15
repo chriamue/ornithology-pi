@@ -1,4 +1,5 @@
 use crate::Sighting;
+use base64;
 use bluer::{
     adv::Advertisement,
     agent::Agent,
@@ -6,13 +7,14 @@ use bluer::{
     Address,
 };
 use futures::StreamExt;
-use std::collections::BTreeMap;
+use image::{self, imageops::FilterType};
+use std::error::Error;
 use std::{
     sync::{Arc, Mutex},
     time::Duration,
 };
 use tokio::{
-    io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader},
+    io::{AsyncReadExt, AsyncWriteExt},
     time::sleep,
 };
 
@@ -28,7 +30,7 @@ async fn handle_connection(
     sightings: Arc<Mutex<Vec<Sighting>>>,
     stream: &mut Stream,
     addr: Address,
-) {
+) -> Result<(), Box<dyn Error>> {
     let recv_mtu = MTU;
 
     println!(
@@ -55,7 +57,7 @@ async fn handle_connection(
             Ok(n) => n,
             Err(err) => {
                 println!("Read failed: {}", &err);
-                continue;
+                break;
             }
         };
         let buf = &buf[..n];
@@ -92,10 +94,54 @@ async fn handle_connection(
 
                     last.unwrap().clone()
                 };
+                println!("{:?}", sighting);
                 let response = serde_json::to_vec(&Message::LastResponse {
                     last: sighting.clone(),
                 })
                 .unwrap();
+
+                if let Err(err) = stream.write_all(&response).await {
+                    println!("Write failed: {}", &err);
+                    continue;
+                }
+                if let Err(err) = stream.write_all(&serde_json::to_vec(&'\n').unwrap()).await {
+                    println!("Write failed: {}", &err);
+                    continue;
+                }
+            }
+            Ok(Message::ImageRequest { uuid }) => {
+                println!("{}", uuid);
+                let filename = {
+                    let sightings = sightings.lock().unwrap();
+                    let sighting = sightings
+                        .iter()
+                        .filter(|sighting| sighting.uuid == uuid)
+                        .last()
+                        .cloned();
+                    let sighting = sighting.unwrap_or_default();
+                    format!("{}_{}.jpg", sighting.species, sighting.uuid)
+                };
+                let buf = match image::open(format!("sightings/{}", filename)) {
+                    Ok(base_img) => {
+                        let base_img = base_img.resize(24, 16, FilterType::Gaussian);
+                        let mut buf = vec![];
+                        base_img
+                            .write_to(&mut buf, image::ImageOutputFormat::Jpeg(60))
+                            .unwrap();
+                        buf
+                    }
+                    Err(err) => {
+                        println!("{:?}", err);
+                        vec![]
+                    }
+                };
+                let base64_img = format!("data:image/jpeg;{}", base64::encode(&buf));
+                let response = serde_json::to_vec(&Message::ImageResponse {
+                    base64: base64_img.clone(),
+                })
+                .unwrap();
+                println!("{}", base64_img);
+
                 if let Err(err) = stream.write_all(&response).await {
                     println!("Write failed: {}", &err);
                     continue;
@@ -106,7 +152,8 @@ async fn handle_connection(
                 }
             }
             _ => {
-                println!("Echoing {} bytes", buf.len());
+                let text = std::str::from_utf8(buf).unwrap();
+                println!("Echoing {} bytes: {}", buf.len(), text);
                 if let Err(err) = stream.write_all(buf).await {
                     println!("Write failed: {}", &err);
                     continue;
@@ -116,6 +163,7 @@ async fn handle_connection(
     }
 
     println!("{} disconnected", &addr);
+    Ok(())
 }
 
 pub async fn run(sightings: Arc<Mutex<Vec<Sighting>>>) -> bluer::Result<()> {
@@ -142,6 +190,14 @@ pub async fn run(sightings: Arc<Mutex<Vec<Sighting>>>) -> bluer::Result<()> {
         ..Default::default()
     };
 
+    let le_advertisement = Advertisement {
+        service_uuids: vec![SERVICE_UUID].into_iter().collect(),
+        discoverable: Some(true),
+        local_name: Some("ornithology-pi".to_string()),
+        ..Default::default()
+    };
+    let _adv_handle = adapter.advertise(le_advertisement).await?;
+
     eprintln!("Registered profile");
 
     println!(
@@ -154,35 +210,33 @@ pub async fn run(sightings: Arc<Mutex<Vec<Sighting>>>) -> bluer::Result<()> {
 
     println!("Listening on channel {}", CHANNEL);
 
-    let stdin = BufReader::new(tokio::io::stdin());
-    let mut lines = stdin.lines();
-
     loop {
         println!("\nWaiting for connection...");
-        let (mut stream, sa) = tokio::select! {
-            req = hndl.next() => {
-                let req = req.expect("received no connect request");
-                let sa = req.device();
-                match req.accept() {
-                    Ok(v) => (v, sa),
-                    Err(err) => {
-                        println!("Accepting connection failed: {}", &err);
-                        continue;
-                    }}
-            },
-            _ = lines.next_line() => break,
+        let req = hndl.next().await.expect("received no connect request");
+        let sa = req.device();
+        let mut stream = match req.accept() {
+            Ok(v) => v,
+            Err(err) => {
+                println!("Accepting connection failed: {}", &err);
+                continue;
+            }
         };
-        let recv_mtu = MTU; // stream.as_ref().recv_mtu()?;
+        let recv_mtu = MTU;
 
         println!(
             "Accepted connection from {:?} with receive MTU {} bytes",
             &sa, &recv_mtu
         );
-        handle_connection(sightings.clone(), &mut stream, sa).await
+        match handle_connection(sightings.clone(), &mut stream, sa).await {
+            Err(err) => println!("{:?}", err),
+            _ => (),
+        }
     }
 
     println!("Removing advertisement");
     drop(hndl);
+    drop(_adv_handle);
+    drop(_agent_hndl);
     sleep(Duration::from_secs(1)).await;
     Ok(())
 }
