@@ -156,7 +156,7 @@ async fn handle_connection(
                     };
                     let buf = match image::open(format!("sightings/{}", filename)) {
                         Ok(base_img) => {
-                            let base_img = base_img.resize(96, 96, FilterType::Gaussian);
+                            let base_img = base_img.resize(640, 480, FilterType::Gaussian);
                             let mut buf = vec![];
                             base_img
                                 .write_to(&mut buf, image::ImageOutputFormat::Jpeg(60))
