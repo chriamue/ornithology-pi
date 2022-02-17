@@ -62,101 +62,132 @@ async fn handle_connection(
         };
         let buf = &buf[..n];
 
-        let message = serde_json::from_slice::<Message>(buf);
-        match message {
-            Ok(Message::Ping) => {
-                println!("{:?}", Message::Ping);
-                let response = serde_json::to_vec(&Message::Pong).unwrap();
+        let message_stream = serde_json::Deserializer::from_slice(buf).into_iter::<Message>();
 
-                if let Err(err) = stream.write_all(&response).await {
-                    println!("Write failed: {}", &err);
-                    continue;
-                }
-            }
-            Ok(Message::Pong) => {
-                println!("{:?}", Message::Pong);
-            }
-            Ok(Message::CountRequest) => {
-                let count = {
-                    let len = sightings.lock().unwrap().len();
-                    len as u64
-                };
-                let response = serde_json::to_vec(&Message::CountResponse { count }).unwrap();
-                if let Err(err) = stream.write_all(&response).await {
-                    println!("Write failed: {}", &err);
-                    continue;
-                }
-            }
-            Ok(Message::LastRequest) => {
-                let sighting = {
-                    let mutex = sightings.lock().unwrap();
-                    let last = mutex.last();
+        for message in message_stream {
+            match message {
+                Ok(Message::Ping) => {
+                    println!("{:?}", Message::Ping);
+                    let response = serde_json::to_vec(&Message::Pong).unwrap();
 
-                    last.unwrap().clone()
-                };
-                println!("{:?}", sighting);
-                let response = serde_json::to_vec(&Message::LastResponse {
-                    last: sighting.clone(),
-                })
-                .unwrap();
-
-                if let Err(err) = stream.write_all(&response).await {
-                    println!("Write failed: {}", &err);
-                    continue;
-                }
-                if let Err(err) = stream.write_all(&serde_json::to_vec(&'\n').unwrap()).await {
-                    println!("Write failed: {}", &err);
-                    continue;
-                }
-            }
-            Ok(Message::ImageRequest { uuid }) => {
-                println!("{}", uuid);
-                let filename = {
-                    let sightings = sightings.lock().unwrap();
-                    let sighting = sightings
-                        .iter()
-                        .filter(|sighting| sighting.uuid == uuid)
-                        .last()
-                        .cloned();
-                    let sighting = sighting.unwrap_or_default();
-                    format!("{}_{}.jpg", sighting.species, sighting.uuid)
-                };
-                let buf = match image::open(format!("sightings/{}", filename)) {
-                    Ok(base_img) => {
-                        let base_img = base_img.resize(24, 16, FilterType::Gaussian);
-                        let mut buf = vec![];
-                        base_img
-                            .write_to(&mut buf, image::ImageOutputFormat::Jpeg(60))
-                            .unwrap();
-                        buf
+                    if let Err(err) = stream.write_all(&response).await {
+                        println!("Write failed: {}", &err);
+                        continue;
                     }
-                    Err(err) => {
-                        println!("{:?}", err);
-                        vec![]
+                }
+                Ok(Message::Pong) => {
+                    println!("{:?}", Message::Pong);
+                }
+                Ok(Message::CountRequest) => {
+                    let count = {
+                        let len = sightings.lock().unwrap().len();
+                        len as u64
+                    };
+                    let response = serde_json::to_vec(&Message::CountResponse { count }).unwrap();
+                    if let Err(err) = stream.write_all(&response).await {
+                        println!("Write failed: {}", &err);
+                        continue;
                     }
-                };
-                let base64_img = format!("data:image/jpeg;{}", base64::encode(&buf));
-                let response = serde_json::to_vec(&Message::ImageResponse {
-                    base64: base64_img.clone(),
-                })
-                .unwrap();
-                println!("{}", base64_img);
+                }
+                Ok(Message::LastRequest) => {
+                    let sighting = {
+                        let mutex = sightings.lock().unwrap();
+                        let last = mutex.last();
 
-                if let Err(err) = stream.write_all(&response).await {
-                    println!("Write failed: {}", &err);
-                    continue;
+                        last.unwrap().clone()
+                    };
+                    println!("{:?}", sighting);
+                    let response = serde_json::to_vec(&Message::LastResponse {
+                        last: sighting.clone(),
+                    })
+                    .unwrap();
+
+                    if let Err(err) = stream.write_all(&response).await {
+                        println!("Write failed: {}", &err);
+                        continue;
+                    }
                 }
-                if let Err(err) = stream.write_all(&serde_json::to_vec(&'\n').unwrap()).await {
-                    println!("Write failed: {}", &err);
-                    continue;
+                Ok(Message::SightingIdsRequest) => {
+                    let sightings = {
+                        let mutex: Vec<Sighting> = sightings.lock().unwrap().to_vec();
+                        let sightings: Vec<String> = mutex.into_iter().map(|i| i.uuid).collect();
+                        sightings
+                    };
+                    let response = serde_json::to_vec(&Message::SightingIdsResponse {
+                        ids: sightings.clone(),
+                    })
+                    .unwrap();
+
+                    if let Err(err) = stream.write_all(&response).await {
+                        println!("Write failed: {}", &err);
+                        continue;
+                    }
                 }
-            }
-            _ => {
-                let text = std::str::from_utf8(buf).unwrap();
-                println!("Echoing {} bytes: {}", buf.len(), text);
-                if let Err(err) = stream.write_all(buf).await {
-                    println!("Write failed: {}", &err);
-                    continue;
+                Ok(Message::SightingRequest { uuid }) => {
+                    println!("sighting {}", uuid);
+                    let sighting = {
+                        let sightings = sightings.lock().unwrap();
+                        let sighting = sightings
+                            .iter()
+                            .filter(|sighting| sighting.uuid == uuid)
+                            .last()
+                            .cloned();
+                        sighting.unwrap_or_default()
+                    };
+                    let response =
+                        serde_json::to_vec(&Message::SightingResponse { sighting }).unwrap();
+
+                    if let Err(err) = stream.write_all(&response).await {
+                        println!("Write failed: {}", &err);
+                        continue;
+                    }
+                }
+                Ok(Message::ImageRequest { uuid }) => {
+                    println!("{}", uuid);
+                    let filename = {
+                        let sightings = sightings.lock().unwrap();
+                        let sighting = sightings
+                            .iter()
+                            .filter(|sighting| sighting.uuid == uuid)
+                            .last()
+                            .cloned();
+                        let sighting = sighting.unwrap_or_default();
+                        format!("{}_{}.jpg", sighting.species, sighting.uuid)
+                    };
+                    let buf = match image::open(format!("sightings/{}", filename)) {
+                        Ok(base_img) => {
+                            let base_img = base_img.resize(96, 96, FilterType::Gaussian);
+                            let mut buf = vec![];
+                            base_img
+                                .write_to(&mut buf, image::ImageOutputFormat::Jpeg(60))
+                                .unwrap();
+                            buf
+                        }
+                        Err(err) => {
+                            println!("{:?}", err);
+                            vec![]
+                        }
+                    };
+                    let base64_img = format!("data:image/jpeg;{}", base64::encode(&buf));
+                    let response = serde_json::to_vec(&Message::ImageResponse {
+                        uuid,
+                        base64: base64_img.clone(),
+                    })
+                    .unwrap();
+                    println!("{}", base64_img);
+
+                    if let Err(err) = stream.write_all(&response).await {
+                        println!("Write failed: {}", &err);
+                        continue;
+                    }
+                }
+                _ => {
+                    let text = std::str::from_utf8(buf).unwrap();
+                    println!("Echoing {} bytes: {}", buf.len(), text);
+                    if let Err(err) = stream.write_all(buf).await {
+                        println!("Write failed: {}", &err);
+                        continue;
+                    }
                 }
             }
         }
@@ -189,14 +220,6 @@ pub async fn run(sightings: Arc<Mutex<Vec<Sighting>>>) -> bluer::Result<()> {
         auto_connect: Some(true),
         ..Default::default()
     };
-
-    let le_advertisement = Advertisement {
-        service_uuids: vec![SERVICE_UUID].into_iter().collect(),
-        discoverable: Some(true),
-        local_name: Some("ornithology-pi".to_string()),
-        ..Default::default()
-    };
-    let _adv_handle = adapter.advertise(le_advertisement).await?;
 
     eprintln!("Registered profile");
 
@@ -235,7 +258,6 @@ pub async fn run(sightings: Arc<Mutex<Vec<Sighting>>>) -> bluer::Result<()> {
 
     println!("Removing advertisement");
     drop(hndl);
-    drop(_adv_handle);
     drop(_agent_hndl);
     sleep(Duration::from_secs(1)).await;
     Ok(())

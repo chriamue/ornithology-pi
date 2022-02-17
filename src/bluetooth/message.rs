@@ -13,12 +13,20 @@ pub enum Message {
     CountRequest,
     #[serde(rename = "count_response")]
     CountResponse { count: u64 },
+    #[serde(rename = "sighting_ids_request")]
+    SightingIdsRequest,
+    #[serde(rename = "sighting_ids_response")]
+    SightingIdsResponse { ids: Vec<String> },
     #[serde(rename = "last_request")]
     LastRequest,
     #[serde(rename = "last_response")]
     LastResponse { last: Sighting },
+    #[serde(rename = "sighting_request")]
+    SightingRequest { uuid: String },
+    #[serde(rename = "sighting_response")]
+    SightingResponse { sighting: Sighting },
     #[serde(rename = "image_request")]
     ImageRequest { uuid: String },
     #[serde(rename = "image_response")]
-    ImageResponse { base64: String },
+    ImageResponse { uuid: String, base64: String },
 }
