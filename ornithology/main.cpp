@@ -3,14 +3,13 @@
 #include <QQmlContext>
 #include <QLocale>
 #include <QTranslator>
-#include "bluetooth.h"
-#include "devicesmodel.h"
+#include "device.h"
 
 int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);
 
-    Bluetooth bluetooth;
+    Device device;
     QTranslator translator;
     const QStringList uiLanguages = QLocale::system().uiLanguages();
     for (const QString &locale : uiLanguages) {
@@ -29,20 +28,9 @@ int main(int argc, char *argv[])
             QCoreApplication::exit(-1);
     }, Qt::QueuedConnection);
 
-    QStringList dataList = {
-        "Item 1",
-        "Item 2",
-        "Item 3",
-        "Item 4"
-    };
-
-    DevicesModel deviceList(&dataList);
-
-    engine.rootContext()->setContextProperty("bluetooth", &bluetooth);
-    engine.rootContext()->setContextProperty("deviceList", &deviceList);
+    engine.rootContext()->setContextProperty("device", &device);
 
     engine.load(url);
-    engine.rootContext()->findChild<QObject*>("deviceListView")->setProperty("deviceList", QVariant(dataList));
 
     return app.exec();
 }

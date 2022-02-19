@@ -9,17 +9,24 @@ find_package(Qt6 6.2 COMPONENTS Bluetooth Quick Gui REQUIRED)
 
 qt_add_executable(appornithology
     main.cpp
-    bluetooth.h bluetooth.cpp
-    devicesmodel.h devicesmodel.cpp
+    device.h device.cpp
+    deviceinfo.h deviceinfo.cpp
+
     qml.qrc
 )
 
 qt_add_qml_module(appornithology
     URI ornithology
     VERSION 1.0
-    QML_FILES main.qml
+    QML_FILES
+        main.qml
+        Dialog.qml
+        Header.qml
+        Label.qml
+        Menu.qml
     RESOURCES
        resources/bluetooth.png
+       resources/busy_dark.png
 )
 
 set_target_properties(appornithology PROPERTIES
