@@ -80,6 +80,9 @@ public:
     bool isRandomAddress() const;
     void setRandomAddress(bool newValue);
 
+    DeviceInfo &getCurrent();
+    void setCurrent(const QString& address);
+
 public slots:
     void startDeviceDiscovery();
 

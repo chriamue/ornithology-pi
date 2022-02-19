@@ -177,3 +177,20 @@ void Device::setRandomAddress(bool newValue)
     randomAddress = newValue;
     emit randomAddressChanged();
 }
+
+DeviceInfo &Device::getCurrent()
+{
+    return this->currentDevice;
+}
+
+void Device::setCurrent(const QString &address)
+{
+    for (auto d: qAsConst(devices)) {
+        if (auto device = qobject_cast<DeviceInfo *>(d)) {
+            if (device->getAddress() == address ) {
+                currentDevice.setDevice(device->getDevice());
+                break;
+            }
+        }
+    }
+}

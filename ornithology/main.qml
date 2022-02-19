@@ -53,7 +53,7 @@ Window {
             MouseArea {
                 anchors.fill: parent
                 onClicked: {
-                    device.connect(modelData.deviceAddress);
+                    client.connect(modelData.deviceAddress);
                     pageLoader.source = "Services.qml"
                 }
             }

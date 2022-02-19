@@ -3,6 +3,7 @@
 #include <QQmlContext>
 #include <QLocale>
 #include <QTranslator>
+#include "client.h"
 #include "device.h"
 
 int main(int argc, char *argv[])
@@ -10,6 +11,7 @@ int main(int argc, char *argv[])
     QGuiApplication app(argc, argv);
 
     Device device;
+    Client client(&device);
     QTranslator translator;
     const QStringList uiLanguages = QLocale::system().uiLanguages();
     for (const QString &locale : uiLanguages) {
@@ -28,6 +30,7 @@ int main(int argc, char *argv[])
             QCoreApplication::exit(-1);
     }, Qt::QueuedConnection);
 
+    engine.rootContext()->setContextProperty("client", &client);
     engine.rootContext()->setContextProperty("device", &device);
 
     engine.load(url);

@@ -9,9 +9,9 @@ find_package(Qt6 6.2 COMPONENTS Bluetooth Quick Gui REQUIRED)
 
 qt_add_executable(appornithology
     main.cpp
+    client.h client.cpp
     device.h device.cpp
     deviceinfo.h deviceinfo.cpp
-
     qml.qrc
 )
 
