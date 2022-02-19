@@ -49,6 +49,19 @@ cargo install cargo-deb
 cargo deb
 ```
 
+## Build App
+
+```sh
+mkdir build
+cd build
+cmake ../ornithology-app
+```
+
+There seems to be an issue with bluetooth.
+A solution is to run the app with
+
+`BLUETOOTH_FORCE_DBUS_LE_VERSION=1`
+
 ### Build for Raspberry Pi
 
 #### Crossbuild
@@ -74,6 +87,18 @@ Now download and install.
 ```sh
 wget https://github.com/chriamue/ornithology-pi/releases/latest/download/ornithology-pi.deb
 sudo apt install ./ornithology-pi.deb
+```
+
+To start the service run
+
+```sh
+sudo service ornithology-pi start
+```
+
+If you want to start the service on boot, run
+
+```sh
+sudo systemctl enable ornithology-pi
 ```
 
 #### Iptables
