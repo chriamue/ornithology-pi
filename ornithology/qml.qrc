@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/">
+        <file alias="bluetooth.png">resources/bluetooth.png</file>
+        <file alias="main.qml">main.qml</file>
+    </qresource>
+</RCC>
