@@ -21,3 +21,8 @@ QString Sighting::getImage() const
 {
     return m_message.image;
 }
+
+QDateTime Sighting::getDatetime() const
+{
+    return QDateTime::fromSecsSinceEpoch(m_message.timestamp);
+}

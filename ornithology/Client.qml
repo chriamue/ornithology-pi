@@ -86,6 +86,10 @@ Rectangle {
             else
                 info.visible = false;
         }
+    }
+
+    Connections {
+        target: device
 
         function onDisconnected() {
             pageLoader.source = "main.qml"
@@ -115,7 +119,6 @@ Rectangle {
             MouseArea {
                 anchors.fill: parent
                 onClicked: {
-                    //pageLoader.source = "Characteristics.qml";
                     client.loadImage(modelData.sightingUuid);
                 }
             }
@@ -124,6 +127,14 @@ Rectangle {
                 id: sightingsSpecies
                 textContent: modelData.sightingSpecies
                 anchors.top: parent.top
+                anchors.topMargin: 5
+            }
+
+            Label {
+                id: sightingsDatetime
+                font.pointSize: sightingsSpecies.font.pointSize * 0.5
+                textContent: modelData.sightingDatetime
+                anchors.top: sightingsSpecies.bottom
                 anchors.topMargin: 5
             }
 

@@ -5,6 +5,7 @@
 #include <QtBluetooth/QBluetoothSocket>
 #include <QtBluetooth/QBluetoothAddress>
 #include "device.h"
+#include "sighting.h"
 
 class Client : public QObject
 {
@@ -37,9 +38,11 @@ private:
     QBluetoothSocket *socket = nullptr;
     Device * device;
     QByteArray currentLine;
-    QList<QObject *> m_sightings;
+    QList<Sighting *> m_sightings;
     bool idsRequested = false;
     QString m_picture;
+
+    void sortSightings();
 
 };
 

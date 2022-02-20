@@ -1,5 +1,8 @@
+#include <algorithm>
+
 #include <QPixmap>
 #include <QBuffer>
+
 #include "client.h"
 #include "message.h"
 #include "sighting.h"
@@ -81,6 +84,7 @@ void Client::on_dataReady()
     if(message.type == Message::MessageType::LastResponse || message.type == Message::MessageType::SightingResponse) {
         Sighting * sighting = new Sighting(&message);
         m_sightings.append(sighting);
+        sortSightings();
         emit sightingsUpdated();
     }
     else if(message.type == Message::MessageType::ImageResponse) {
@@ -111,4 +115,15 @@ void Client::on_socketError(QBluetoothSocket::SocketError error)
 {
     QString s = QVariant::fromValue(error).toString();
     qDebug() << s;
+}
+
+bool sortByDatetime(const Sighting *v1, const Sighting *v2)
+ {
+     return v1->getDatetime() < v2->getDatetime();
+ }
+
+void Client::sortSightings()
+{
+
+    std::sort(m_sightings.begin(), m_sightings.end(), sortByDatetime);
 }
