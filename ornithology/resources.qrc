@@ -1,7 +1,6 @@
 <RCC>
     <qresource prefix="/">
         <file alias="bluetooth.png">resources/bluetooth.png</file>
-        <file alias="main.qml">qml/Header.qml</file>
-        <file>qml/main.qml</file>
+        <file alias="favicon.ico">resources/favicon.ico</file>
     </qresource>
 </RCC>
