@@ -65,7 +65,7 @@ Device::Device()
 {
     //! [les-devicediscovery-1]
     discoveryAgent = new QBluetoothDeviceDiscoveryAgent();
-    discoveryAgent->setLowEnergyDiscoveryTimeout(25000);
+    discoveryAgent->setLowEnergyDiscoveryTimeout(10000);
     connect(discoveryAgent, &QBluetoothDeviceDiscoveryAgent::deviceDiscovered,
             this, &Device::addDevice);
     connect(discoveryAgent, &QBluetoothDeviceDiscoveryAgent::errorOccurred, this,

@@ -12,6 +12,8 @@ qt_add_executable(appornithology
     client.h client.cpp
     device.h device.cpp
     deviceinfo.h deviceinfo.cpp
+    message.h message.cpp
+    sighting.h sighting.cpp
     qml.qrc
 )
 
@@ -20,10 +22,12 @@ qt_add_qml_module(appornithology
     VERSION 1.0
     QML_FILES
         main.qml
+        Client.qml
         Dialog.qml
         Header.qml
         Label.qml
         Menu.qml
+        ZoomImage.qml
     RESOURCES
        resources/bluetooth.png
        resources/busy_dark.png

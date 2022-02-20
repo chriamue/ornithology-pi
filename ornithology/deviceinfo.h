@@ -56,7 +56,6 @@
 #include <qbluetoothdeviceinfo.h>
 #include <qbluetoothaddress.h>
 #include <QList>
-#include "deviceinfo.h"
 
 class DeviceInfo: public QObject
 {

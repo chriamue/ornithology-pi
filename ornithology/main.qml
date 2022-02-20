@@ -54,7 +54,7 @@ Window {
                 anchors.fill: parent
                 onClicked: {
                     client.connect(modelData.deviceAddress);
-                    pageLoader.source = "Services.qml"
+                    pageLoader.source = "Client.qml"
                 }
             }
 
@@ -91,5 +91,10 @@ Window {
         }
 
         onButtonClick: device.useRandomAddress = !device.useRandomAddress;
+    }
+
+    Loader {
+        id: pageLoader
+        anchors.fill: parent
     }
 }
