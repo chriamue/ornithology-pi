@@ -76,7 +76,7 @@ cargo deb --no-build --target armv7-unknown-linux-gnueabihf
 
 ### Install on Raspberry Pi
 
-You need some rerequirements:
+You need some requirements:
 
 ```sh
 sudo apt install gstreamer1.0-plugins-good

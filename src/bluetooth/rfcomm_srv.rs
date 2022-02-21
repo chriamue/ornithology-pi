@@ -197,16 +197,10 @@ async fn handle_connection(
     Ok(())
 }
 
-pub async fn run(sightings: Arc<Mutex<Vec<Sighting>>>) -> bluer::Result<()> {
-    let session = bluer::Session::new().await?;
-    let adapter_names = session.adapter_names().await?;
-    let adapter_name = adapter_names.first().expect("No Bluetooth adapter present");
-    let adapter = session.adapter(adapter_name)?;
-    adapter.set_powered(true).await?;
-    adapter.set_discoverable(true).await?;
-    adapter.set_discoverable_timeout(0).await?;
-    adapter.set_pairable(false).await?;
-
+pub async fn run_session(
+    session: &bluer::Session,
+    sightings: Arc<Mutex<Vec<Sighting>>>,
+) -> bluer::Result<()> {
     let agent = Agent::default();
     let _agent_hndl = session.register_agent(agent).await?;
 
@@ -221,14 +215,8 @@ pub async fn run(sightings: Arc<Mutex<Vec<Sighting>>>) -> bluer::Result<()> {
         ..Default::default()
     };
 
-    eprintln!("Registered profile");
+    println!("Registered profile {}", profile.uuid);
 
-    println!(
-        "Advertising on Bluetooth adapter {} with address {} and service {}",
-        &adapter_name,
-        adapter.address().await?,
-        profile.uuid
-    );
     let mut hndl = session.register_profile(profile).await?;
 
     println!("Listening on channel {}", CHANNEL);
@@ -259,6 +247,25 @@ pub async fn run(sightings: Arc<Mutex<Vec<Sighting>>>) -> bluer::Result<()> {
     println!("Removing advertisement");
     drop(hndl);
     drop(_agent_hndl);
+}
+
+pub async fn run(sightings: Arc<Mutex<Vec<Sighting>>>) -> bluer::Result<()> {
+    let session = bluer::Session::new().await?;
+    let adapter_names = session.adapter_names().await?;
+    let adapter_name = adapter_names.first().expect("No Bluetooth adapter present");
+    let adapter = session.adapter(adapter_name)?;
+    adapter.set_powered(true).await?;
+    adapter.set_discoverable(true).await?;
+    adapter.set_discoverable_timeout(0).await?;
+    adapter.set_pairable(false).await?;
+
+    println!(
+        "Advertising on Bluetooth adapter {} with address {}",
+        &adapter_name,
+        adapter.address().await?
+    );
+
+    run_session(&session, sightings).await.unwrap();
     sleep(Duration::from_secs(1)).await;
     Ok(())
 }

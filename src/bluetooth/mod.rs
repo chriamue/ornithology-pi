@@ -12,23 +12,29 @@ pub mod rfcomm_srv;
 pub const MANUFACTURER_ID: u16 = 0xf00d;
 
 pub async fn run_bluetooth(sightings: Arc<Mutex<Vec<Sighting>>>) -> bluer::Result<()> {
-    //let gatt_thread = tokio::spawn(gatt_srv::run(sightings.clone()));
-    //let l2cap_thread = tokio::spawn(l2cap_srv::run(sightings.clone()));
-    let rfcomm_thread = tokio::spawn(rfcomm_srv::run(sightings.clone()));
-    /*gatt_thread
+    let session = bluer::Session::new().await?;
+    let adapter_names = session.adapter_names().await?;
+    let adapter_name = adapter_names.first().expect("No Bluetooth adapter present");
+    let adapter = session.adapter(adapter_name)?;
+    adapter.set_powered(true).await?;
+    adapter.set_discoverable(true).await?;
+    adapter.set_discoverable_timeout(0).await?;
+    adapter.set_pairable(false).await?;
+
+    println!(
+        "Advertising on Bluetooth adapter {} with address {}",
+        &adapter_name,
+        adapter.address().await?
+    );
+    let gatt_handle = gatt_srv::run_advertise(&adapter, sightings.clone())
         .await
-        .unwrap()
-        .expect("The thread being joined has panicked");
-    */
-    /*
-    l2cap_thread
-    .await
-    .unwrap()
-    .expect("The thread being joined has panicked");
-    */
-    rfcomm_thread
+        .unwrap();
+
+    rfcomm_srv::run_session(&session, sightings.clone())
         .await
-        .unwrap()
-        .expect("The thread being joined has panicked");
+        .unwrap();
+
+    drop(gatt_handle);
+
     Ok(())
 }

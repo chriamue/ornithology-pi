@@ -95,18 +95,10 @@ pub fn last_species_characteristic(sightings: Arc<Mutex<Vec<Sighting>>>) -> Char
     }
 }
 
-pub async fn run(sightings: Arc<Mutex<Vec<Sighting>>>) -> bluer::Result<()> {
-    let session = bluer::Session::new().await?;
-    let adapter_names = session.adapter_names().await?;
-    let adapter_name = adapter_names.first().expect("No Bluetooth adapter present");
-    let adapter = session.adapter(adapter_name)?;
-    adapter.set_powered(true).await?;
-
-    println!(
-        "Advertising on Bluetooth adapter {} with address {}",
-        &adapter_name,
-        adapter.address().await?
-    );
+pub async fn run_advertise(
+    adapter: &bluer::Adapter,
+    sightings: Arc<Mutex<Vec<Sighting>>>,
+) -> bluer::Result<bluer::gatt::local::ApplicationHandle> {
     let mut manufacturer_data = BTreeMap::new();
     manufacturer_data.insert(MANUFACTURER_ID, vec![0x21, 0x22, 0x23, 0x24]);
     let le_advertisement = Advertisement {
@@ -118,10 +110,6 @@ pub async fn run(sightings: Arc<Mutex<Vec<Sighting>>>) -> bluer::Result<()> {
     };
     let adv_handle = adapter.advertise(le_advertisement).await?;
 
-    println!(
-        "Serving GATT service on Bluetooth adapter {}",
-        &adapter_name
-    );
     let app = Application {
         services: vec![Service {
             uuid: SERVICE_UUID,
@@ -137,6 +125,23 @@ pub async fn run(sightings: Arc<Mutex<Vec<Sighting>>>) -> bluer::Result<()> {
     };
     let app_handle = adapter.serve_gatt_application(app).await?;
 
+    Ok(app_handle)
+}
+
+pub async fn run(sightings: Arc<Mutex<Vec<Sighting>>>) -> bluer::Result<()> {
+    let session = bluer::Session::new().await?;
+    let adapter_names = session.adapter_names().await?;
+    let adapter_name = adapter_names.first().expect("No Bluetooth adapter present");
+    let adapter = session.adapter(adapter_name)?;
+    adapter.set_powered(true).await?;
+
+    println!(
+        "Advertising on Bluetooth adapter {} with address {}",
+        &adapter_name,
+        adapter.address().await?
+    );
+
+    let app_handle = run_advertise(&adapter, sightings).await.unwrap();
     println!("Service ready. Press enter to quit.");
     let stdin = BufReader::new(tokio::io::stdin());
     let mut lines = stdin.lines();
@@ -144,8 +149,6 @@ pub async fn run(sightings: Arc<Mutex<Vec<Sighting>>>) -> bluer::Result<()> {
 
     println!("Removing service and advertisement");
     drop(app_handle);
-    drop(adv_handle);
     sleep(Duration::from_secs(1)).await;
-
     Ok(())
 }
