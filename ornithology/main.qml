@@ -14,10 +14,14 @@ Window {
         menuHeight: (parent.height/6)
         menuText: device.update
         onButtonClick: {
-            device.startDeviceDiscovery();
             if (device.state) {
-                info.dialogText = "Searching...";
-                info.visible = true;
+                device.deviceScanFinished();
+            } else {
+                device.startDeviceDiscovery();
+                if (device.state) {
+                    info.dialogText = "Searching...";
+                    info.visible = true;
+                }
             }
         }
 
@@ -91,13 +95,13 @@ Window {
         menuWidth: parent.width
         anchors.bottom: parent.bottom
         menuText: { if (device.devicesList.length)
-                        visible = true
-                    else
-                        visible = false
-                    if (device.useRandomAddress)
-                        "Address type: Random"
-                    else
-                        "Address type: Public"
+                visible = true
+            else
+                visible = false
+            if (device.useRandomAddress)
+                "Address type: Random"
+            else
+                "Address type: Public"
         }
 
         onButtonClick: device.useRandomAddress = !device.useRandomAddress;

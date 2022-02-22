@@ -85,11 +85,11 @@ public:
 
 public slots:
     void startDeviceDiscovery();
+    void deviceScanFinished();
 
 private slots:
     // QBluetoothDeviceDiscoveryAgent related
     void addDevice(const QBluetoothDeviceInfo&);
-    void deviceScanFinished();
     void deviceScanError(QBluetoothDeviceDiscoveryAgent::Error);
 
 Q_SIGNALS:

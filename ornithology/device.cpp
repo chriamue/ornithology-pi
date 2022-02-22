@@ -103,7 +103,7 @@ void Device::startDeviceDiscovery()
 //! [les-devicediscovery-3]
 void Device::addDevice(const QBluetoothDeviceInfo &info)
 {
-    if (info.coreConfigurations() & QBluetoothDeviceInfo::LowEnergyCoreConfiguration)
+    if (info.coreConfigurations() & QBluetoothDeviceInfo::LowEnergyCoreConfiguration && !info.name().isEmpty())
         setUpdate("Last device added: " + info.name());
 }
 //! [les-devicediscovery-3]
@@ -112,7 +112,7 @@ void Device::deviceScanFinished()
 {
     const QList<QBluetoothDeviceInfo> foundDevices = discoveryAgent->discoveredDevices();
     for (auto &nextDevice : foundDevices)
-        if (nextDevice.coreConfigurations())
+        if (nextDevice.coreConfigurations() && !nextDevice.name().isEmpty())
             devices.append(new DeviceInfo(nextDevice));
 
     emit devicesUpdated();
