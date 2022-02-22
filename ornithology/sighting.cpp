@@ -1,4 +1,6 @@
 #include "sighting.h"
+#include <QPixmap>
+#include <QBuffer>
 
 Sighting::Sighting(Message *message)
 {
@@ -20,6 +22,12 @@ QString Sighting::getUuid() const
 QString Sighting::getImage() const
 {
     return m_message.image;
+}
+
+void Sighting::setImage(QString image)
+{
+    m_message.image = image;
+    emit sightingChanged();
 }
 
 QDateTime Sighting::getDatetime() const

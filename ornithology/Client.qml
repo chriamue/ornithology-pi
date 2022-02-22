@@ -76,6 +76,14 @@ Rectangle {
         anchors.centerIn: parent
         visible: true
         dialogText: "Scanning for sightings...";
+
+        MouseArea {
+            anchors.fill: parent
+            onClicked: {
+                client.loadImage(modelData.sightingUuid);
+                info.visible = false
+            }
+        }
     }
 
     Connections {
@@ -146,7 +154,14 @@ Rectangle {
                 anchors.bottomMargin: 5
             }
 
-
+            Image {
+                id: sightingsImage
+                x: 20
+                width: 50
+                height: parent.height - 2
+                source: modelData.sightingImage
+                fillMode: Image.PreserveAspectFit
+            }
         }
     }
 

@@ -43,6 +43,7 @@ private:
     QString m_picture;
 
     void sortSightings();
+    Sighting * getSighting(QString uuid);
 
 };
 

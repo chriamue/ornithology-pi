@@ -174,7 +174,6 @@ async fn handle_connection(
                         base64: base64_img.clone(),
                     })
                     .unwrap();
-                    println!("{}", base64_img);
 
                     if let Err(err) = stream.write_all(&response).await {
                         println!("Write failed: {}", &err);

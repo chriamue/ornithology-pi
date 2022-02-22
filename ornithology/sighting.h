@@ -18,6 +18,7 @@ public:
     QString getSpecies() const;
     QString getUuid() const;
     QString getImage() const;
+    void setImage(QString image);
     QDateTime getDatetime() const;
 
 Q_SIGNALS:

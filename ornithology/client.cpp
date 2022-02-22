@@ -98,8 +98,14 @@ void Client::on_dataReady()
 
         QString image("data:image/jpg;base64,");
         image.append(QString::fromLatin1(bArray.toBase64().data()));
-        m_picture = image; //message.image.replace("data:image/jpeg;", "data:image/jpg;base64,");
+        m_picture = image;
         emit pictureUpdated();
+
+        Sighting * sighting = getSighting(message.uuid);
+        if(sighting) {
+            sighting->setImage(image);
+            emit sightingsUpdated();
+        }
     }
     else if(message.type == Message::MessageType::SightingIdsResponse) {
         for(auto id: message.ids) {
@@ -126,4 +132,14 @@ void Client::sortSightings()
 {
 
     std::sort(m_sightings.begin(), m_sightings.end(), sortByDatetime);
+}
+
+Sighting *Client::getSighting(QString uuid)
+{
+    for(auto sighting: m_sightings) {
+        if(sighting->getUuid() == uuid) {
+            return sighting;
+        }
+    }
+    return nullptr;
 }
