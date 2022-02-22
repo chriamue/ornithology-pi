@@ -97,15 +97,5 @@ Rectangle {
                 buttonClick()
             }
         }
-
-        Image {
-            id: bluetoothImage
-            x: 20
-            y: 10
-            width: 50
-            height: 50
-            source: "resources/bluetooth.png"
-            fillMode: Image.PreserveAspectFit
-        }
     }
 }
