@@ -108,7 +108,7 @@ pub async fn run_advertise(
         local_name: Some("ornithology-pi".to_string()),
         ..Default::default()
     };
-    let adv_handle = adapter.advertise(le_advertisement).await?;
+    let _adv_handle = adapter.advertise(le_advertisement).await?;
 
     let app = Application {
         services: vec![Service {

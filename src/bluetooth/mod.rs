@@ -6,7 +6,6 @@ mod message;
 pub use message::Message;
 
 pub mod gatt_srv;
-pub mod l2cap_srv;
 pub mod rfcomm_srv;
 
 pub const MANUFACTURER_ID: u16 = 0xf00d;

@@ -117,11 +117,16 @@ name = "bluetooth"
 required-features = ["bluetooth"]
 
 [[example]]
-name = "bt_client"
+name = "bt_gatt_srv"
+required-features = ["bluetooth"]
+
+
+[[example]]
+name = "bt_rfcomm_srv"
 required-features = ["bluetooth"]
 
 [[example]]
-name = "bt_gatt_srv"
+name = "bt_rfcomm_client"
 required-features = ["bluetooth"]
 
 [[example]]
