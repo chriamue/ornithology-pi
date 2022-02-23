@@ -1,4 +1,10 @@
+var start = 0;
+var end = 10;
 var images = document.getElementById("images");
+
+function clean_images() {
+  images.innerHTML = '';
+}
 
 function load_images(sightings) {
   sightings.forEach(function (bird, _b) {
@@ -17,13 +23,27 @@ function load_images(sightings) {
 }
 
 function fetch_sightings() {
-  return fetch("/sightings/").then(function (response) {
+  return fetch("/sightings?start=" + start + "&end=" + end).then(function (response) {
     if (response.ok) {
       return response.json();
     } else {
       return Promise.reject(response);
     }
   });
+}
+
+function next_images() {
+  start = start + 10;
+  end = end + 10;
+  clean_images();
+  return fetch_sightings().then((sightings) => load_images(sightings));
+}
+
+function prev_images() {
+  start = start - 10;
+  end = end - 10;
+  clean_images();
+  return fetch_sightings().then((sightings) => load_images(sightings));
 }
 
 fetch_sightings().then((sightings) => load_images(sightings));

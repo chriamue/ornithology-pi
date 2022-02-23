@@ -42,14 +42,19 @@ fn generate_204() -> Status {
     Status::NoContent
 }
 
-#[get("/sightings")]
-fn sightings(sightings: &State<Arc<Mutex<Vec<Sighting>>>>) -> Json<Vec<Sighting>> {
+#[get("/sightings?<start>&<end>")]
+fn sightings(sightings: &State<Arc<Mutex<Vec<Sighting>>>>, start: Option<usize>, end: Option<usize>) -> Json<Vec<Sighting>> {
     let sightings = match sightings.lock() {
         Ok(sightings) => sightings.to_vec(),
         Err(err) => {
             println!("{}", err);
             Vec::new()
         }
+    };
+    let sightings = match (start, end) {
+        (Some(start), Some(end)) => sightings[start.max(0)..end.min(sightings.len())].to_vec(),
+        (Some(start), None) => sightings[start..].to_vec(),
+        _ => sightings
     };
     Json(sightings)
 }

@@ -44,8 +44,10 @@ impl Observable for BirdDetector {
 
 impl Detector for BirdDetector {
     fn detect_next(&mut self) {
-        let frame = self.capture.lock().unwrap().frame().unwrap();
-        let crop_img = DynamicImage::ImageRgb8(frame);
+        let crop_img = {
+            let frame = self.capture.lock().unwrap().frame().unwrap();
+            DynamicImage::ImageRgb8(frame)
+        };
         let detections = self.crop.crop(crop_img);
         if !detections.is_empty() {
             let detection_frame = detections[0].1.clone();

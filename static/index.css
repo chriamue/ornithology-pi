@@ -8,6 +8,10 @@ body {
     background-color: whitesmoke;
 }
 
+.nav {
+    display:inline-block;
+}
+
 footer {
     position: absolute;
     bottom: 0;

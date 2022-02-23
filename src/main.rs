@@ -36,6 +36,7 @@ impl Observer for BirdObserver {
     fn notify(&self, sighting: DataSighting) {
         let mut sightings = self.sightings.lock().unwrap();
         sightings.push(sighting.0.clone());
+        drop(sightings);
         println!("{:?}", sighting.0.species);
         self.save(sighting);
     }
