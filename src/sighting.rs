@@ -51,6 +51,23 @@ pub fn load_from_file(filename: &str) -> Result<Vec<Sighting>, Box<dyn Error>> {
     Ok(sightings)
 }
 
+pub fn save_to_file(sightings: Vec<Sighting>, filename: &str) -> Result<(), Box<dyn Error>> {
+    let mut file = std::fs::OpenOptions::new()
+        .write(true)
+        .truncate(true)
+        .open(filename)
+        .unwrap();
+
+    for sighting in sightings {
+        let line = format!("{}\n", serde_json::to_string(&sighting).unwrap());
+        file.write_all(line.as_bytes())
+            .expect("Unable to write file");
+        file.flush().unwrap();
+    }
+    
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -71,6 +88,27 @@ mod tests {
 
         let sighting = Sighting::default();
         sighting.save("test.db").unwrap();
+        let sightings = load_from_file("test.db").unwrap();
+        assert_eq!(sightings.len(), 2);
+    }
+
+    #[test]
+    fn save_to_file_test() {
+        if Path::new("test.db").exists() {
+            std::fs::remove_file("test.db").unwrap();
+        }
+
+        let sighting = Sighting::default();
+
+        sighting.save("test.db").unwrap();
+
+        let mut sightings = load_from_file("test.db").unwrap();
+        assert_eq!(sightings.len(), 1);
+
+        let sighting = Sighting::default();
+        sightings.push(sighting);
+
+        save_to_file(sightings, "test.db").unwrap();
         let sightings = load_from_file("test.db").unwrap();
         assert_eq!(sightings.len(), 2);
     }

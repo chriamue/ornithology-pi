@@ -1,3 +1,4 @@
+use crate::sighting::save_to_file;
 #[cfg(feature = "detect")]
 use crate::BirdDetector;
 use crate::{MJpeg, Sighting, WebCam};
@@ -7,7 +8,7 @@ use rocket::response::content::Custom;
 use rocket::response::stream::ByteStream;
 use rocket::serde::json::Json;
 use rocket::State;
-use rocket::{get, routes};
+use rocket::{delete, get, routes};
 use rocket::{Build, Rocket};
 use rocket_include_static_resources::{
     cached_static_response_handler, static_resources_initializer,
@@ -43,7 +44,11 @@ fn generate_204() -> Status {
 }
 
 #[get("/sightings?<start>&<end>")]
-fn sightings(sightings: &State<Arc<Mutex<Vec<Sighting>>>>, start: Option<usize>, end: Option<usize>) -> Json<Vec<Sighting>> {
+fn sightings(
+    sightings: &State<Arc<Mutex<Vec<Sighting>>>>,
+    start: Option<usize>,
+    end: Option<usize>,
+) -> Json<Vec<Sighting>> {
     let sightings = match sightings.lock() {
         Ok(sightings) => sightings.to_vec(),
         Err(err) => {
@@ -52,9 +57,12 @@ fn sightings(sightings: &State<Arc<Mutex<Vec<Sighting>>>>, start: Option<usize>,
         }
     };
     let sightings = match (start, end) {
-        (Some(start), Some(end)) => sightings[start.max(0)..end.min(sightings.len())].to_vec(),
+        (Some(start), Some(end)) => {
+            let end = end.min(sightings.len()).max(0);
+            sightings[start.max(0).min(end)..end].to_vec()
+        }
         (Some(start), None) => sightings[start..].to_vec(),
-        _ => sightings
+        _ => sightings,
     };
     Json(sightings)
 }
@@ -87,6 +95,30 @@ async fn sighting(sightings: &State<Arc<Mutex<Vec<Sighting>>>>, id: String) -> O
         .ok()
 }
 
+#[delete("/sightings/<id>")]
+async fn delete_sighting(sightings: &State<Arc<Mutex<Vec<Sighting>>>>, id: String) {
+    let filename = {
+        let sightings = sightings.lock().unwrap();
+        let sighting = sightings
+            .iter()
+            .filter(|sighting| sighting.uuid == id)
+            .last()
+            .cloned();
+        let sighting = sighting.unwrap();
+        format!("{}_{}.jpg", sighting.species, sighting.uuid)
+    };
+
+    std::fs::remove_file(Path::new("sightings/").join(filename)).unwrap();
+
+    let sightings = {
+        let mut sightings = sightings.lock().unwrap();
+        let index = sightings.iter().position(|x| x.uuid == id).unwrap();
+        sightings.remove(index);
+        sightings.to_vec()
+    };
+    save_to_file(sightings, "sightings/sightings.db").unwrap()
+}
+
 pub fn server(sightings: Arc<Mutex<Vec<Sighting>>>, capture: Arc<Mutex<WebCam>>) -> Rocket<Build> {
     rocket::build()
         .attach(static_resources_initializer!(
@@ -101,7 +133,14 @@ pub fn server(sightings: Arc<Mutex<Vec<Sighting>>>, capture: Arc<Mutex<WebCam>>)
         )
         .mount(
             "/",
-            routes![index, sightings, sighting, webcam, generate_204],
+            routes![
+                index,
+                sightings,
+                sighting,
+                delete_sighting,
+                webcam,
+                generate_204
+            ],
         )
         .manage(sightings)
         .manage(capture)
