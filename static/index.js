@@ -3,11 +3,18 @@ var end = 10;
 var images = document.getElementById("images");
 var webcam = document.getElementById("webcam");
 
-function load_webcam() {
-  var image = document.createElement("img");
-  image.title ="webcam";
-  image.src = "/webcam";
-  webcam.appendChild(image);
+function play_webcam() {
+  webcam.setAttribute("src", "/webcam");
+  webcam.onclick = function () {
+    pause_webcam();
+  };
+}
+
+function pause_webcam() {
+  webcam.setAttribute("src", "/frame");
+  webcam.onclick = function () {
+    play_webcam();
+  };
 }
 
 function clean_images() {
@@ -75,4 +82,4 @@ function prev_images() {
 }
 
 reload_images();
-setTimeout(load_webcam, 1000);
+setTimeout(pause_webcam, 500);

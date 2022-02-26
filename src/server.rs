@@ -1,7 +1,7 @@
 use crate::sighting::save_to_file;
 #[cfg(feature = "detect")]
 use crate::BirdDetector;
-use crate::{MJpeg, Sighting, WebCam};
+use crate::{Capture, MJpeg, Sighting, WebCam};
 use rocket::fs::NamedFile;
 use rocket::http::{ContentType, Status};
 use rocket::response::content::Custom;
@@ -77,6 +77,15 @@ fn webcam(capture: &'_ State<Arc<Mutex<WebCam>>>) -> Custom<ByteStream<MJpeg>> {
     )
 }
 
+#[get("/frame")]
+fn frame(capture: &'_ State<Arc<Mutex<WebCam>>>) -> (Status, (ContentType, Vec<u8>)) {
+    let frame = {
+        let mut capture = capture.lock().unwrap();
+        capture.bytes_jpeg().unwrap()
+    };
+    (Status::Ok, (ContentType::JPEG, frame))
+}
+
 #[get("/sightings/<id>")]
 async fn sighting(sightings: &State<Arc<Mutex<Vec<Sighting>>>>, id: String) -> Option<NamedFile> {
     let filename = {
@@ -134,6 +143,7 @@ pub fn server(sightings: Arc<Mutex<Vec<Sighting>>>, capture: Arc<Mutex<WebCam>>)
         .mount(
             "/",
             routes![
+                frame,
                 index,
                 sightings,
                 sighting,

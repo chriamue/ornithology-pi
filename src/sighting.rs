@@ -64,7 +64,7 @@ pub fn save_to_file(sightings: Vec<Sighting>, filename: &str) -> Result<(), Box<
             .expect("Unable to write file");
         file.flush().unwrap();
     }
-    
+
     Ok(())
 }
 
