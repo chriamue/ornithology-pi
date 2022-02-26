@@ -185,12 +185,12 @@ Rectangle {
         id: menu
         anchors.bottom: parent.bottom
         menuWidth: parent.width
-        menuText: device.update
+        menuText: client.update
         menuHeight: (parent.height/6)
         onButtonClick: {
             client.disconnect()
             pageLoader.source = "main.qml"
-            device.update = "Search"
+            client.update = "Search"
         }
     }
 }

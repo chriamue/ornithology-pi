@@ -88,7 +88,6 @@ public slots:
     void deviceScanFinished();
 
 private slots:
-    // QBluetoothDeviceDiscoveryAgent related
     void addDevice(const QBluetoothDeviceInfo&);
     void deviceScanError(QBluetoothDeviceDiscoveryAgent::Error);
 
@@ -108,7 +107,7 @@ private:
     QString m_message;
     bool connected = false;
     bool m_deviceScanState = false;
-    bool randomAddress = false;
+    bool randomAddress = true;
 };
 
 #endif // DEVICE_H

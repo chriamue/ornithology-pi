@@ -48,7 +48,7 @@ Window {
         clip: true
 
         anchors.top: menu.bottom
-        anchors.bottom: connectToggle.top
+        anchors.bottom: parent.bottom
         model: device.devicesList
 
         delegate: Rectangle {
@@ -87,24 +87,6 @@ Window {
                 anchors.bottomMargin: 5
             }
         }
-    }
-
-    Menu {
-        id: connectToggle
-
-        menuWidth: parent.width
-        anchors.bottom: parent.bottom
-        menuText: { if (device.devicesList.length)
-                visible = true
-            else
-                visible = false
-            if (device.useRandomAddress)
-                "Address type: Random"
-            else
-                "Address type: Public"
-        }
-
-        onButtonClick: device.useRandomAddress = !device.useRandomAddress;
     }
 
     Loader {

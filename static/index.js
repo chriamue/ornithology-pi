@@ -23,10 +23,13 @@ function clean_images() {
 
 function load_images(sightings) {
   sightings.forEach(function (bird, _b) {
+    var date = new Date(bird.timestamp * 1000);
     var div = document.createElement("div");
 
     var h3 = document.createElement("h3");
     h3.innerText = bird.species;
+    var p = document.createElement("p");
+    p.innerText = date.toLocaleDateString() + " " + date.toLocaleTimeString();
     var img = document.createElement("img");
     img.src = "/sightings/" + bird.uuid;
     img.title = bird.species;
@@ -39,6 +42,7 @@ function load_images(sightings) {
     };
 
     div.appendChild(h3);
+    div.appendChild(p);
     div.appendChild(img);
     div.appendChild(remove_button);
     images.appendChild(div);

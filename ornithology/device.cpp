@@ -119,7 +119,7 @@ void Device::deviceScanFinished()
     m_deviceScanState = false;
     emit stateChanged();
     if (devices.isEmpty())
-        setUpdate("No Low Energy devices found...");
+        setUpdate("No Bluetooth devices found...");
     else
         setUpdate("Done! Scan Again!");
 }

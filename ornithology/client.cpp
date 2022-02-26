@@ -28,6 +28,11 @@ QString Client::picture()
     return this->m_picture;
 }
 
+QString Client::getUpdate()
+{
+    return this->m_message;
+}
+
 void Client::connect(const QString &address)
 {
     device->setCurrent(address);
@@ -121,6 +126,13 @@ void Client::on_socketError(QBluetoothSocket::SocketError error)
 {
     QString s = QVariant::fromValue(error).toString();
     qDebug() << s;
+    setUpdate(s);
+}
+
+void Client::setUpdate(const QString &message)
+{
+    this->m_message = message;
+    emit updateChanged();
 }
 
 bool sortByDatetime(const Sighting *v1, const Sighting *v2)

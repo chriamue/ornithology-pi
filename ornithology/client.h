@@ -11,6 +11,7 @@ class Client : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(bool socketError READ hasSocketError)
+    Q_PROPERTY(QString update READ getUpdate WRITE setUpdate NOTIFY updateChanged)
     Q_PROPERTY(QString picture READ picture NOTIFY pictureUpdated)
     Q_PROPERTY(QVariant sightingsList READ getSightings NOTIFY sightingsUpdated)
 
@@ -19,6 +20,7 @@ class Client : public QObject
     bool hasSocketError() const;
     QVariant getSightings();
     QString picture();
+    QString getUpdate();
 
 public slots:
     void connect(const QString &address);
@@ -31,15 +33,18 @@ private slots:
     void on_socketError(QBluetoothSocket::SocketError error);
 
 Q_SIGNALS:
-    void sightingsUpdated();
     void pictureUpdated();
+    void sightingsUpdated();
+    void updateChanged();
 
 private:
+    void setUpdate(const QString &message);
     QBluetoothSocket *socket = nullptr;
     Device * device;
     QByteArray currentLine;
     QList<Sighting *> m_sightings;
     bool idsRequested = false;
+    QString m_message;
     QString m_picture;
 
     void sortSightings();
