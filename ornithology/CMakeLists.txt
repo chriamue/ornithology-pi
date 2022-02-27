@@ -24,6 +24,7 @@ qt_add_qml_module(appornithology
     QML_FILES
         main.qml
         Client.qml
+        Devices.qml
         Dialog.qml
         Header.qml
         Label.qml

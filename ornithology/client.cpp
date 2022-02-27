@@ -2,6 +2,7 @@
 
 #include <QPixmap>
 #include <QBuffer>
+#include <QStack>
 
 #include "client.h"
 #include "message.h"
@@ -73,6 +74,30 @@ void Client::loadImage(const QString &uuid)
     socket->write(text);
 }
 
+std::tuple<int, int> nextJsonObject(QByteArray currentLine) {
+    int i = 0;
+    int index = currentLine.indexOf("{");
+    if (index < 0) {
+        return std::make_tuple(0,0);
+    }
+
+    QStack <int> st;
+
+    for(i = index; i < currentLine.length(); i++){
+
+        if(currentLine[i] == '{')
+            st.push(i);
+
+        else if(currentLine[i] == '}'){
+            st.pop();
+            if(st.empty()){
+                return std::make_tuple(index, i);
+            }
+        }
+    }
+    return std::make_tuple(0,0);
+}
+
 void Client::on_dataReady()
 {
     if(!idsRequested) {
@@ -80,12 +105,17 @@ void Client::on_dataReady()
         idsRequested = true;
     }
     QByteArray chunk = socket->readAll();
-    if(chunk.startsWith("{")){
-        currentLine.clear();
-    }
     this->currentLine += chunk;
 
-    Message message = Message::parse(currentLine);
+    std::tuple<int, int> jsonIndex = nextJsonObject(this->currentLine);
+
+    if(std::get<1>(jsonIndex) < 1)
+        return;
+
+    QByteArray jsonObject = this->currentLine.mid(std::get<0>(jsonIndex), std::get<1>(jsonIndex));
+    this->currentLine = this->currentLine.remove(0, std::get<1>(jsonIndex));
+
+    Message message = Message::parse(jsonObject);
     if(message.type == Message::MessageType::LastResponse || message.type == Message::MessageType::SightingResponse) {
         Sighting * sighting = new Sighting(&message);
         m_sightings.append(sighting);

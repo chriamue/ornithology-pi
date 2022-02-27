@@ -69,6 +69,12 @@ Rectangle {
         id: header
         anchors.top: parent.top
         headerText: "Sightings list"
+        MouseArea {
+            anchors.fill: parent
+            onClicked: {
+                client.requestSightingIds();
+            }
+        }
     }
 
     Dialog {
@@ -100,7 +106,7 @@ Rectangle {
         target: device
 
         function onDisconnected() {
-            pageLoader.source = "main.qml"
+            pageLoader.source = "Devices.qml"
         }
     }
 
@@ -189,7 +195,7 @@ Rectangle {
         menuHeight: (parent.height/6)
         onButtonClick: {
             client.disconnect()
-            pageLoader.source = "main.qml"
+            pageLoader.source = "Devices.qml"
             client.update = "Search"
         }
     }
