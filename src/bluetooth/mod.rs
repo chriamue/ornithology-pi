@@ -25,15 +25,16 @@ pub async fn run_bluetooth(sightings: Arc<Mutex<Vec<Sighting>>>) -> bluer::Resul
         &adapter_name,
         adapter.address().await?
     );
-    let gatt_handle = gatt_srv::run_advertise(&adapter, sightings.clone())
-        .await
-        .unwrap();
+    /*let gatt_handle = gatt_srv::run_advertise(&adapter, sightings.clone())
+    .await
+    .unwrap();
+    */
 
     rfcomm_srv::run_session(&session, sightings.clone())
         .await
         .unwrap();
 
-    drop(gatt_handle);
+    //drop(gatt_handle);
 
     Ok(())
 }
