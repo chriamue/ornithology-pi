@@ -66,6 +66,14 @@ void Client::requestSightingIds()
     socket->write(text);
 }
 
+void Client::removeSighting(const QString &uuid)
+{
+    if (!socket)
+        return;
+    QByteArray text = Message::RemoveSightingRequest(uuid).toJson(QJsonDocument::Compact);
+    socket->write(text);
+}
+
 void Client::loadImage(const QString &uuid)
 {
     if (!socket)
@@ -143,6 +151,8 @@ void Client::on_dataReady()
         }
     }
     else if(message.type == Message::MessageType::SightingIdsResponse) {
+        m_sightings.clear();
+        emit sightingsUpdated();
         for(auto id: message.ids) {
             QByteArray text = Message::SightingRequest(id).toJson(QJsonDocument::Compact);
             qDebug() << text;

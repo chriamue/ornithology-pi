@@ -27,6 +27,7 @@ public:
     static QJsonDocument LastRequest();
     static QJsonDocument SightingIdsRequest();
     static QJsonDocument SightingRequest(QString uuid);
+    static QJsonDocument RemoveSightingRequest(QString uuid);
     static QJsonDocument ImageRequest(QString uuid);
 };
 

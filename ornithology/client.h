@@ -26,6 +26,7 @@ public slots:
     void connect(const QString &address);
     void disconnect();
     void requestSightingIds();
+    void removeSighting(const QString &uuid);
     void loadImage(const QString &uuid);
 
 private slots:

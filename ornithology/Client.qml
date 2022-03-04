@@ -49,16 +49,14 @@
 **
 ****************************************************************************/
 
-import QtQuick 2.0
+import QtQuick 2.15
+import QtQuick.Controls 2.15
 
 Rectangle {
     width: 300
     height: 600
 
     Component.onCompleted: {
-        // Loading this page may take longer than QLEController
-        // stopping with an error, go back and readjust this view
-        // based on controller errors
         if (client.controllerError) {
             info.visible = false;
             menu.menuText = client.update
@@ -77,7 +75,7 @@ Rectangle {
         }
     }
 
-    Dialog {
+    InfoDialog {
         id: info
         anchors.centerIn: parent
         visible: true
@@ -132,19 +130,38 @@ Rectangle {
 
             MouseArea {
                 anchors.fill: parent
+                propagateComposedEvents: true
                 onClicked: {
                     client.loadImage(modelData.sightingUuid);
                 }
+                onPressAndHold: {
+                    deleteDialog.open();
+                    mouse.accepted = false;
+                }
             }
 
-            Label {
+            Dialog {
+                id: deleteDialog
+                title: "Delete"
+                standardButtons: Dialog.Ok | Dialog.Cancel
+                modal: true
+                focus: true
+
+                onAccepted: {
+                    client.removeSighting(modelData.sightingUuid);
+                    console.log("Ok clicked")
+                }
+            }
+
+
+            CustomLabel {
                 id: sightingsSpecies
                 textContent: modelData.sightingSpecies
                 anchors.top: parent.top
                 anchors.topMargin: 5
             }
 
-            Label {
+            CustomLabel {
                 id: sightingsDatetime
                 font.pointSize: sightingsSpecies.font.pointSize * 0.5
                 textContent: modelData.sightingDatetime
@@ -152,7 +169,7 @@ Rectangle {
                 anchors.topMargin: 5
             }
 
-            Label {
+            CustomLabel {
                 id: sightingsUuid
                 font.pointSize: sightingsSpecies.font.pointSize * 0.5
                 textContent: modelData.sightingUuid
@@ -187,7 +204,7 @@ Rectangle {
         }
     }
 
-    Menu {
+    SearchMenu {
         id: menu
         anchors.bottom: parent.bottom
         menuWidth: parent.width

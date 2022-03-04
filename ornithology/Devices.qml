@@ -1,15 +1,17 @@
-import QtQuick 2
+import QtQuick
+import QtQuick.Controls 2
 
 Rectangle {
     width: 300
     height: 600
 
-    Menu {
+    SearchMenu {
         id: menu
         anchors.top: parent.top
         menuWidth: parent.width
         menuHeight: (parent.height/6)
         menuText: device.update
+
         onButtonClick: {
             if (device.state) {
                 device.deviceScanFinished();
@@ -33,7 +35,7 @@ Rectangle {
         }
     }
 
-    Dialog {
+    InfoDialog {
         id: info
         anchors.centerIn: parent
         visible: false
@@ -69,14 +71,14 @@ Rectangle {
                 }
             }
 
-            Label {
+            CustomLabel {
                 id: deviceName
                 textContent: modelData.deviceName
                 anchors.top: parent.top
                 anchors.topMargin: 5
             }
 
-            Label {
+            CustomLabel {
                 id: deviceAddress
                 textContent: modelData.deviceAddress
                 font.pointSize: deviceName.font.pointSize*0.7

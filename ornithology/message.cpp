@@ -74,6 +74,14 @@ QJsonDocument Message::SightingRequest(QString uuid)
     return QJsonDocument( payload );
 }
 
+QJsonDocument Message::RemoveSightingRequest(QString uuid)
+{
+    QJsonObject payload;
+    payload["op"] = "remove_sighting_request";
+    payload["uuid"] = uuid;
+    return QJsonDocument( payload );
+}
+
 QJsonDocument Message::ImageRequest(QString uuid)
 {
     QJsonObject payload;

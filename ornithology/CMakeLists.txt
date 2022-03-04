@@ -6,7 +6,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt6 6.2 COMPONENTS Bluetooth Quick Gui REQUIRED)
+find_package(Qt6 6.2 COMPONENTS Bluetooth Quick QuickControls2 Gui REQUIRED)
 
 qt_add_executable(appornithology
     main.cpp
@@ -24,11 +24,11 @@ qt_add_qml_module(appornithology
     QML_FILES
         main.qml
         Client.qml
+        CustomLabel.qml
         Devices.qml
-        Dialog.qml
+        InfoDialog.qml
         Header.qml
-        Label.qml
-        Menu.qml
+        SearchMenu.qml
         ZoomImage.qml
     RESOURCES
        resources/bluetooth.png
@@ -46,4 +46,4 @@ set_target_properties(appornithology PROPERTIES
 target_compile_definitions(appornithology
     PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:QT_QML_DEBUG>)
 target_link_libraries(appornithology
-    PRIVATE Qt6::Bluetooth Qt6::Quick Qt6::Gui)
+    PRIVATE Qt6::Bluetooth Qt6::Quick Qt6::QuickControls2 Qt6::Gui)

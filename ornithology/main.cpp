@@ -9,6 +9,8 @@
 
 int main(int argc, char *argv[])
 {
+    QGuiApplication::setApplicationName("Ornithology");
+    QGuiApplication::setOrganizationName("chriamue");
     QGuiApplication app(argc, argv);
     app.setWindowIcon(QIcon(":/favicon.ico"));
 
