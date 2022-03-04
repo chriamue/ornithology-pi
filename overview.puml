@@ -1,0 +1,37 @@
+@startuml overview
+
+node Browser {
+    card WebPage
+    card LocalPage
+}
+
+node RaspberryPi {
+    card HTTP
+    card Bluetooth
+
+    node OrnithologyApp {
+        card Capture
+        card CropImage
+        card IdentifyBird
+        card ServeDetection
+        card Server
+        card Gatt
+    }
+}
+
+card WebCam
+
+WebPage --> Bluetooth
+LocalPage --> HTTP
+
+WebCam --> Capture
+Capture --> Server
+Capture -> CropImage
+CropImage -> IdentifyBird
+IdentifyBird -> ServeDetection
+ServeDetection -> Server
+Server --> HTTP
+ServeDetection -> Gatt
+Gatt --> Bluetooth
+
+@enduml
