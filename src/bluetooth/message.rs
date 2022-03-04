@@ -23,6 +23,8 @@ pub enum Message {
     LastResponse { last: Sighting },
     #[serde(rename = "sighting_request")]
     SightingRequest { uuid: String },
+    #[serde(rename = "remove_sighting_request")]
+    RemoveSightingRequest { uuid: String },
     #[serde(rename = "sighting_response")]
     SightingResponse { sighting: Sighting },
     #[serde(rename = "image_request")]

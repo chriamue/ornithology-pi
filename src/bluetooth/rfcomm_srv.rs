@@ -1,4 +1,5 @@
 use crate::Sighting;
+use crate::sighting::save_to_file;
 use base64;
 use bluer::{
     adv::Advertisement,
@@ -136,6 +137,29 @@ async fn handle_connection(
                     };
                     let response =
                         serde_json::to_vec(&Message::SightingResponse { sighting }).unwrap();
+
+                    if let Err(err) = stream.write_all(&response).await {
+                        println!("Write failed: {}", &err);
+                        continue;
+                    }
+                }
+                Ok(Message::RemoveSightingRequest { uuid }) => {
+                    println!("remove sighting {}", uuid);
+                    let sightings = {
+                        let mut sightings = sightings.lock().unwrap();
+                        let index = sightings.iter().position(|x| x.uuid == uuid).unwrap();
+                        sightings.remove(index);
+                        sightings.to_vec()
+                    };
+                    save_to_file(sightings.clone(), "sightings/sightings.db").unwrap();
+                    let sightings = {
+                        let sightings: Vec<String> = sightings.into_iter().map(|i| i.uuid).collect();
+                        sightings
+                    };
+                    let response = serde_json::to_vec(&Message::SightingIdsResponse {
+                        ids: sightings.clone(),
+                    })
+                    .unwrap();
 
                     if let Err(err) = stream.write_all(&response).await {
                         println!("Write failed: {}", &err);
