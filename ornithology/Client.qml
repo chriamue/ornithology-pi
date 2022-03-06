@@ -116,6 +116,8 @@ Rectangle {
         model: client.sightingsList
         clip: true
 
+        ScrollBar.vertical: ScrollBar { id: scrollBar }
+
         delegate: Rectangle {
             id: servicebox
             height:100

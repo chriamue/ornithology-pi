@@ -50,6 +50,8 @@ Rectangle {
         anchors.bottom: parent.bottom
         model: device.devicesList
 
+        ScrollBar.vertical: ScrollBar { id: scrollBar }
+
         delegate: Rectangle {
             id: box
             height:100

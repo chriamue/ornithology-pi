@@ -12,7 +12,7 @@ Rectangle {
         fillMode: Image.PreserveAspectFit
     }
 
-    Menu {
+    SearchMenu {
         id: menu
         anchors.bottom: parent.bottom
         menuWidth: parent.width
