@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Qt6 6.2 COMPONENTS Bluetooth Quick QuickControls2 Gui REQUIRED)
 
-qt_add_executable(${PROJECT_NAME}
+qt_add_executable(app${PROJECT_NAME}
     MANUAL_FINALIZATION
     main.cpp
     client.h client.cpp
@@ -20,7 +20,7 @@ qt_add_executable(${PROJECT_NAME}
     android/AndroidManifest.xml
 )
 
-qt_add_qml_module(${PROJECT_NAME}
+qt_add_qml_module(app${PROJECT_NAME}
     URI ornithology
     VERSION 0.7.0
     QML_FILES
@@ -37,19 +37,19 @@ qt_add_qml_module(${PROJECT_NAME}
        resources/busy_dark.png
 )
 
-set_target_properties(${PROJECT_NAME} PROPERTIES
+set_target_properties(app${PROJECT_NAME} PROPERTIES
     QT_ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android"
     )
 
-set_target_properties(${PROJECT_NAME} PROPERTIES
+set_target_properties(app${PROJECT_NAME} PROPERTIES
     QT_ANDROID_VERSION_NAME "0.7"
     )
 
-set_target_properties(${PROJECT_NAME} PROPERTIES
-    QT_ANDROID_VERSION_CODE "1"
+set_target_properties(app${PROJECT_NAME} PROPERTIES
+    QT_ANDROID_VERSION_CODE "2"
     )
 
-set_target_properties(${PROJECT_NAME} PROPERTIES
+set_target_properties(app${PROJECT_NAME} PROPERTIES
     MACOSX_BUNDLE_GUI_IDENTIFIER ornithology.chriamue.net
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
@@ -57,9 +57,9 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
     WIN32_EXECUTABLE TRUE
 )
 
-target_compile_definitions(${PROJECT_NAME}
+target_compile_definitions(app${PROJECT_NAME}
     PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:QT_QML_DEBUG>)
-target_link_libraries(${PROJECT_NAME}
+target_link_libraries(app${PROJECT_NAME}
     PRIVATE Qt6::Bluetooth Qt6::Quick Qt6::QuickControls2 Qt6::Gui)
 
-qt_finalize_executable(${PROJECT_NAME})
+qt_finalize_executable(app${PROJECT_NAME})
