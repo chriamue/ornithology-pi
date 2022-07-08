@@ -1,5 +1,5 @@
-use crate::Sighting;
 use crate::sighting::save_to_file;
+use crate::Sighting;
 use base64;
 use bluer::{
     adv::Advertisement,
@@ -153,7 +153,8 @@ async fn handle_connection(
                     };
                     save_to_file(sightings.clone(), "sightings/sightings.db").unwrap();
                     let sightings = {
-                        let sightings: Vec<String> = sightings.into_iter().map(|i| i.uuid).collect();
+                        let sightings: Vec<String> =
+                            sightings.into_iter().map(|i| i.uuid).collect();
                         sightings
                     };
                     let response = serde_json::to_vec(&Message::SightingIdsResponse {

@@ -4,7 +4,6 @@ use crate::BirdDetector;
 use crate::{Capture, MJpeg, Sighting, WebCam};
 use rocket::fs::NamedFile;
 use rocket::http::{ContentType, Status};
-use rocket::response::content::Custom;
 use rocket::response::stream::ByteStream;
 use rocket::serde::json::Json;
 use rocket::State;
@@ -68,12 +67,15 @@ fn sightings(
 }
 
 #[get("/webcam")]
-fn webcam(capture: &'_ State<Arc<Mutex<WebCam>>>) -> Custom<ByteStream<MJpeg>> {
+fn webcam(capture: &'_ State<Arc<Mutex<WebCam>>>) -> (Status, (ContentType, ByteStream<MJpeg>)) {
     let capture: Arc<Mutex<WebCam>> = { capture.inner().clone() };
 
-    Custom(
-        ContentType::with_params("multipart", "x-mixed-replace", ("boundary", "frame")),
-        ByteStream(MJpeg::new(capture)),
+    (
+        Status::Ok,
+        (
+            ContentType::new("multipart", "x-mixed-replace").with_params([("boundary", "frame")]),
+            ByteStream(MJpeg::new(capture)),
+        ),
     )
 }
 

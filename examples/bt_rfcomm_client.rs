@@ -66,7 +66,7 @@ pub async fn perform(address: Address, channel: u8) -> Result<()> {
             Ok(Message::CountResponse { count }) => {
                 println!("Counted {}", count);
                 let request = serde_json::to_vec(&Message::LastRequest).unwrap();
-                
+
                 if let Err(err) = wh.write_all(&request).await {
                     println!("Write failed: {}", &err);
                 }

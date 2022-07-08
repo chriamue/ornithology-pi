@@ -73,6 +73,7 @@ mod tests {
     use super::*;
     use std::path::Path;
 
+    #[ignore]
     #[test]
     fn default() {
         if Path::new("test.db").exists() {
