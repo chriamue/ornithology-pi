@@ -20,8 +20,8 @@ struct SightingProps {
 fn sighting_details(SightingProps { sighting }: &SightingProps) -> Html {
     let datetime =
         DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(sighting.timestamp, 0), Utc);
-    
-        let uuid = sighting.uuid.clone();
+
+    let uuid = sighting.uuid.clone();
     html! {
         <div>
             <h3>{ sighting.species.clone() }</h3>
