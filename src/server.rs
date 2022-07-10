@@ -2,6 +2,7 @@ use crate::sighting::save_to_file;
 #[cfg(feature = "detect")]
 use crate::BirdDetector;
 use crate::{Capture, MJpeg, Sighting, WebCam};
+use rocket::fs::FileServer;
 use rocket::fs::NamedFile;
 use rocket::http::{ContentType, Status};
 use rocket::response::stream::ByteStream;
@@ -9,27 +10,8 @@ use rocket::serde::json::Json;
 use rocket::State;
 use rocket::{delete, get, routes};
 use rocket::{Build, Rocket};
-use rocket_include_static_resources::{
-    cached_static_response_handler, static_resources_initializer,
-};
-use rocket_include_static_resources::{EtagIfNoneMatch, StaticContextManager, StaticResponse};
 use std::path::Path;
 use std::sync::{Arc, Mutex};
-
-cached_static_response_handler! {
-    259_200;
-    "/index.js" => cached_indexjs => "indexjs",
-    "/index.css" => cached_indexcss => "indexcss",
-    "/favicon.ico" => cached_favicon => "favicon",
-}
-
-#[get("/")]
-fn index(
-    static_resources: &State<StaticContextManager>,
-    etag_if_none_match: EtagIfNoneMatch,
-) -> StaticResponse {
-    static_resources.build(&etag_if_none_match, "index")
-}
 
 #[derive(Clone)]
 pub struct DetectorState {
@@ -132,21 +114,11 @@ async fn delete_sighting(sightings: &State<Arc<Mutex<Vec<Sighting>>>>, id: Strin
 
 pub fn server(sightings: Arc<Mutex<Vec<Sighting>>>, capture: Arc<Mutex<WebCam>>) -> Rocket<Build> {
     rocket::build()
-        .attach(static_resources_initializer!(
-            "indexjs" => "static/index.js",
-            "indexcss" => "static/index.css",
-            "favicon" => "static/favicon.ico",
-            "index" => ("static", "index.html"),
-        ))
-        .mount(
-            "/",
-            routes![cached_indexjs, cached_indexcss, cached_favicon],
-        )
+        .mount("/", FileServer::from("yew-app/dist"))
         .mount(
             "/",
             routes![
                 frame,
-                index,
                 sightings,
                 sighting,
                 delete_sighting,
