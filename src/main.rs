@@ -82,7 +82,7 @@ async fn main() {
     #[cfg(feature = "server")]
     {
         let launcher = server(sightings.clone(), capture.clone());
-        launcher.launch().await.unwrap();
+        let _launched = launcher.launch().await.unwrap();
     }
 
     #[cfg(feature = "bluetooth")]

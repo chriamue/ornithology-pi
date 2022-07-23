@@ -1,78 +1,56 @@
 use futures::Stream;
 use image::ImageBuffer;
 use image::Rgb;
-use nokhwa::Camera;
 use nokhwa::CameraFormat;
 use nokhwa::FrameFormat;
+use nokhwa::ThreadedCamera;
 use std::error::Error;
 use std::pin::Pin;
 use std::sync::{Arc, Mutex};
 use std::task::Context;
 use std::task::Poll;
-use std::thread;
-use std::time::Duration;
 
 use super::Capture;
 
+fn callback(_image: ImageBuffer<Rgb<u8>, Vec<u8>>) {}
+
 pub struct WebCam {
-    width: u32,
-    height: u32,
-    fps: u32,
-    frame: Arc<Mutex<ImageBuffer<Rgb<u8>, Vec<u8>>>>,
+    pub width: u32,
+    pub height: u32,
+    pub fps: u32,
     running: Arc<Mutex<bool>>,
+    device: ThreadedCamera,
 }
 
 impl WebCam {
     pub fn new(width: u32, height: u32, fps: u32) -> Result<Self, Box<dyn Error>> {
-        let frame = Arc::new(Mutex::new(ImageBuffer::new(width, height)));
         let running = Arc::new(Mutex::new(false));
+        let mut device = ThreadedCamera::new(
+            0,
+            Some(CameraFormat::new_from(
+                width,
+                height,
+                FrameFormat::YUYV,
+                fps,
+            )),
+        )
+        .unwrap();
+        device.open_stream(callback).unwrap();
 
         let mut webcam = Self {
             width,
             height,
             fps,
-            frame,
             running,
+            device,
         };
         webcam.start();
         Ok(webcam)
     }
 
-    fn capture(device: &mut Camera, frame: Arc<Mutex<ImageBuffer<Rgb<u8>, Vec<u8>>>>) {
-        if !device.is_stream_open() {
-            device.open_stream().unwrap();
-        }
-        let new_frame = device.frame().unwrap();
-        *frame.lock().unwrap() = new_frame;
-    }
-
     pub fn start(&mut self) {
-        let width = self.width;
-        let height = self.height;
-        let fps = self.fps;
         let running = self.running.clone();
-        let frame = self.frame.clone();
-
-        thread::spawn(move || {
-            let mut camera = Camera::new(
-                0,
-                Some(CameraFormat::new_from(
-                    width,
-                    height,
-                    FrameFormat::YUYV,
-                    fps,
-                )),
-            )
-            .unwrap();
-            *running.lock().unwrap() = true;
-            loop {
-                if !(*running.lock().unwrap()) {
-                    break;
-                }
-                Self::capture(&mut camera, frame.clone());
-                thread::sleep(Duration::from_millis(30));
-            }
-        });
+        *running.lock().unwrap() = true;
     }
 
     pub fn stop(&mut self) {
@@ -82,13 +60,14 @@ impl WebCam {
 
 impl Default for WebCam {
     fn default() -> Self {
-        Self::new(1920, 1080, 30).unwrap()
+        Self::new(640, 480, 30).unwrap()
     }
 }
 
 impl Capture for WebCam {
     fn frame(&mut self) -> Result<ImageBuffer<Rgb<u8>, Vec<u8>>, Box<dyn Error>> {
-        Ok(self.frame.lock().unwrap().clone())
+        let frame = self.device.last_frame();
+        Ok(frame)
     }
 }
 
@@ -105,9 +84,8 @@ impl Stream for WebCam {
 
 #[cfg(test)]
 mod tests {
-    use futures::StreamExt;
-
     use super::*;
+    use futures::StreamExt;
 
     #[ignore]
     #[test]
@@ -117,28 +95,22 @@ mod tests {
         assert!(capture.frame().unwrap().width() == 1920);
     }
 
-    #[ignore]
+    #[ignore = "blocked webcam"]
     #[tokio::test]
     async fn stream_started() {
         let mut webcam = WebCam::default();
+        webcam.stop();
         let stream = webcam.next().await;
         assert!(stream.is_none());
-        thread::sleep(Duration::from_millis(1000));
+        webcam.start();
         let stream = webcam.next().await;
         assert!(stream.is_some());
     }
 
     #[tokio::test]
     async fn stream_stopped() {
-        let frame = Arc::new(Mutex::new(ImageBuffer::new(1, 1)));
-        let running = Arc::new(Mutex::new(false));
-        let mut webcam = WebCam {
-            width: 640,
-            height: 480,
-            fps: 5,
-            frame,
-            running,
-        };
+        let mut webcam = WebCam::new(640, 480, 30).unwrap();
+        webcam.stop();
         let stream = webcam.next().await;
         assert!(stream.is_none());
     }
