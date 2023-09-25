@@ -8,6 +8,14 @@ Capture birds in your garden, running on raspberry pi.
 
 ## Quickstart
 
+### Install
+
+For proper camera support, you need to install the gstreamer development libraries.
+
+```sh
+apt install libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev v4l-utils
+```
+
 ### Webcam example
 
 ```sh
