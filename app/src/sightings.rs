@@ -1,8 +1,9 @@
 use chrono::{DateTime, NaiveDateTime, Utc};
-use reqwest::Request;
 use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
 use yew::prelude::*;
+
+use crate::contexts::{ApiUrl, ApiUrlContext};
 
 #[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Sighting {
@@ -45,7 +46,13 @@ pub enum Msg {
     ClickRight,
 }
 
+#[derive(Clone, Properties, PartialEq)]
+pub struct Props {
+    pub api_url: String,
+}
+
 pub struct Sightings {
+    api_url: String,
     start: u16,
     end: u16,
     sightings: Arc<Mutex<Vec<Sighting>>>,
@@ -66,12 +73,19 @@ impl Sightings {
         let start = self.start;
         let end = self.end;
         let sightings = self.sightings.clone();
-        let base_url = web_sys::window().unwrap().origin();
+        let base_url = self.api_url.clone();
+        web_sys::console::log_1(
+            &format!("Fetching sightings {} : {}-{}", base_url, start, end).into(),
+        );
         wasm_bindgen_futures::spawn_local(async move {
             let fetched: Vec<Sighting> = reqwest::Client::new()
-                .get(&format!("{}/sightings?start={}&end={}",base_url, start, end))
+                .get(&format!(
+                    "{}/sightings?start={}&end={}",
+                    base_url, start, end
+                ))
                 .send()
-                .await.unwrap()
+                .await
+                .unwrap()
                 .json()
                 .await
                 .unwrap();
@@ -83,10 +97,12 @@ impl Sightings {
 
 impl Component for Sightings {
     type Message = Msg;
-    type Properties = ();
+    type Properties = Props;
 
-    fn create(_ctx: &Context<Self>) -> Self {
+    fn create(ctx: &Context<Self>) -> Self {
+        let api_url = ctx.props().api_url.clone();
         let mut created = Self {
+            api_url,
             start: 0,
             end: 9,
             sightings: Arc::new(Mutex::new(vec![])),
@@ -95,7 +111,25 @@ impl Component for Sightings {
         created
     }
 
-    fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
+    fn changed(&mut self, ctx: &Context<Self>, _old_props: &Self::Properties) -> bool {
+        web_sys::console::log_1(
+            &format!(
+                "Changed sightings {} : {}",
+                self.api_url,
+                ctx.props().api_url
+            )
+            .into(),
+        );
+        if self.api_url != ctx.props().api_url {
+            self.api_url = ctx.props().api_url.clone();
+            self.fetch();
+            true
+        } else {
+            false
+        }
+    }
+
+    fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Msg::ClickLeft => {
                 self.prev();
@@ -145,4 +179,18 @@ impl Component for Sightings {
     }
 
     fn rendered(&mut self, _ctx: &Context<Self>, _first_render: bool) {}
+}
+
+#[function_component()]
+pub fn SightingsContainer() -> Html {
+    let api_url: String = match use_context::<ApiUrlContext>() {
+        Some(api_url) => api_url.inner.clone(),
+        None => ApiUrl::default().inner,
+    };
+
+    html! {
+        <div class="container">
+            <Sightings api_url={api_url} />
+        </div>
+    }
 }
