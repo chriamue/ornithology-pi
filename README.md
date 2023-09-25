@@ -1,63 +1,62 @@
-# OrnithologyPi
+# OrnithologyPi: Bird Detection and Streaming on Raspberry Pi
 
-Capture birds in your garden, running on raspberry pi.
-
-[![Video](https://img.youtube.com/vi/OJHczE3-kko/0.jpg)](https://www.youtube.com/watch?v=OJHczE3-kko)
+OrnithologyPi is a Rust-based project that captures and analyzes a video stream to detect and identify birds. It runs on a Raspberry Pi equipped with a webcam, providing a seamless interface for observing and identifying birds in your garden or any outdoor setting.
 
 ![Overview](https://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/chriamue/ornithology-pi/main/docs/overview.puml)
 
-## Quickstart
+## 🎥 How It Works
 
-### Install
+1. **Capture Stream**: Utilizes a webcam to capture a live video stream.
+2. **Analyze Stream**: Analyzes the stream to detect the presence of birds.
+3. **Identify Birds**: Identifies the detected birds and labels them.
+4. **Web App Interface**: Offers a web app for viewing the live stream and observed birds.
 
-For proper camera support, you need to install the gstreamer development libraries.
+## 🚀 Quickstart
+
+### Prerequisites
+
+Ensure the installation of gstreamer development libraries for proper camera support:
 
 ```sh
 apt install libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev v4l-utils
 ```
 
-### Webcam example
+### Examples
 
-```sh
-cargo run --example webcam
-```
+- **Webcam Example**: Save output at `frame.jpg`.
 
-Output will be saved at frame.jpg.
+  ```sh
+  cargo run --example webcam
+  ```
 
-### Crop example
+- **Crop Example**: Save the cropped bird image at `crop.jpg`.
 
-```sh
-cargo run --example crop
-```
+  ```sh
+  cargo run --example crop
+  ```
 
-The cropped bird image will be saved at crop.jpg.
+- **Label Example**: Print the detected bird on the image.
 
-### Label example
+  ```sh
+  cargo run --example label
+  ```
 
-```sh
-cargo run --example label
-```
+- **Window Example**: Navigate through frames and exit as needed.
 
-The bird detected on the image will be printed.
+  ```sh
+  cargo run --features="window" example window
+  ```
 
-### Window example
+## 📦 Building and Installation
 
-```sh
-cargo run --features="window" example window
-```
-
-Press space for next frame.
-
-Press Escape to exit.
-
-## Build Debian package
+### Build Debian Package
 
 ```sh
 cargo install cargo-deb
 cargo deb
 ```
 
-## Build App
+### Build App
 
 ![App](docs/app_screenshot.png)
 
@@ -67,14 +66,9 @@ cd build
 cmake ../ornithology-app
 ```
 
-There seems to be an issue with bluetooth.
-A solution is to run the app with
-
-`BLUETOOTH_FORCE_DBUS_LE_VERSION=1`
-
 ### Build for Raspberry Pi
 
-#### Crossbuild
+Utilize crossbuild for building for Raspberry Pi:
 
 ```sh
 cargo install cross
@@ -86,40 +80,38 @@ cargo deb --no-build --target armv7-unknown-linux-gnueabihf
 
 ### Install on Raspberry Pi
 
-You need some requirements:
+Install the necessary plugins and the application:
 
 ```sh
 sudo apt install gstreamer1.0-plugins-good
-```
-
-Now download and install.
-
-```sh
 wget https://github.com/chriamue/ornithology-pi/releases/latest/download/ornithology-pi.deb
 sudo apt install ./ornithology-pi.deb
 ```
 
-To start the service run
+To start the service:
 
 ```sh
 sudo service ornithology-pi start
 ```
 
-If you want to start the service on boot, run
+To enable the service on boot:
 
 ```sh
 sudo systemctl enable ornithology-pi
 ```
 
-#### Iptables
+## 🐞 Debugging
 
-```sh
-sudo iptables -t nat -A PREROUTING -s 10.42.0.0/24 -p tcp --dport 80 -j DNAT --to-destination 127.0.0.1:8000
-sudo iptables -t nat -A POSTROUTING -s 10.42.0.0/24 -j MASQUERADE
-```
+### Bluetooth Debugging
 
-## Debug
+For a Bluetooth services overview, visit `chrome://bluetooth-internals/#devices` in the Chrome browser.
 
-### Bluetooth
+### Known Issues
 
-For a bluetooth services overview visit chrome://bluetooth-internals/#devices in the chrome browser.
+- **Bluetooth Issue**: Run the app with `BLUETOOTH_FORCE_DBUS_LE_VERSION=1` to resolve Bluetooth issues.
+
+## 📺 [Demo Video](https://www.youtube.com/watch?v=OJHczE3-kko)
+
+Watch the OrnithologyPi in action:
+
+[![Video](https://img.youtube.com/vi/OJHczE3-kko/0.jpg)](https://www.youtube.com/watch?v=OJHczE3-kko)
