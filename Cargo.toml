@@ -16,7 +16,7 @@ pi = ["bluetooth", "camera", "detect", "server"]
 bluetooth = ["bluer"]
 camera = ["nokhwa/input-native"]
 hotspot = ["wifi-rs"]
-server = ["base64", "rocket"]
+server = ["axum", "base64", "tower", "tower-http"]
 window = ["show-image/image"]
 detect = [
     "camera",
@@ -34,10 +34,10 @@ base64 = { version = "0.13.1", optional = true }
 bluer = { version = "0.13", optional = true }
 bytes = "1.5.0"
 chrono = "0.4"
-figment = "0.10.10"
+figment = { version = "0.10.10", features = ["env", "toml"] }
 format-bytes = "0.1"
 futures = "0.3"
-
+hyper = "0.14.27"
 image = { version = "0.24.7", default-features = false, features = [
     "png",
     "jpeg",
@@ -46,6 +46,7 @@ imageproc = { version = "0.23", default-features = false }
 lenna_core = { git = "https://github.com/lenna-project/lenna-core", branch = "main", optional = true }
 lenna_birds_plugin = { git = "https://github.com/lenna-project/birds-plugin", branch = "main", default-features = false, optional = true }
 lenna_yolo_plugin = { git = "https://github.com/lenna-project/yolo-plugin", branch = "main", default-features = false, optional = true }
+mime = "0.3.17"
 nokhwa = { version = "0.10.4", features = ["output-threaded"] }
 tract-onnx = { version = "0.17", optional = true }
 
@@ -57,7 +58,7 @@ show-image = { version = "0.10.1", optional = true }
 uuid = { version = "0.8", features = ["serde", "v4"] }
 pnet = "0.29.0"
 pretty_env_logger = "0.2"
-rocket = { version = "0.5.0-rc.3", features = ["json"], optional = true }
+axum = { version = "0.6.20", optional = true }
 tokio = { version = "1.32", features = ["full"] }
 tokio-serde = { version = "0.8", features = [
     "bincode",
@@ -65,6 +66,9 @@ tokio-serde = { version = "0.8", features = [
     "json",
     "messagepack",
 ] }
+tokio-util = { version = "0.7.9", features = ["io"] }
+tower = { version = "0.4", features = ["util"], optional = true }
+tower-http = { version = "0.4.0", features = ["fs", "trace"], optional = true}
 wifi-rs = { git = "https://github.com/tnkemdilim/wifi-rs.git", optional = true }
 
 [package.metadata.deb]
@@ -130,4 +134,3 @@ required-features = ["bluetooth"]
 [[example]]
 name = "hotspot"
 required-features = ["hotspot"]
-

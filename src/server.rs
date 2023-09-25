@@ -2,16 +2,24 @@ use crate::sighting::save_to_file;
 #[cfg(feature = "detect")]
 use crate::BirdDetector;
 use crate::{Capture, MJpeg, Sighting, WebCam};
-use rocket::fs::FileServer;
-use rocket::fs::NamedFile;
-use rocket::http::{ContentType, Status};
-use rocket::response::stream::ByteStream;
-use rocket::serde::json::Json;
-use rocket::State;
-use rocket::{delete, get, routes};
-use rocket::{Build, Rocket};
+use axum::{
+    body::StreamBody,
+    extract,
+    extract::Json,
+    response::{IntoResponse, Response},
+    routing::{delete, get},
+    Extension, Router,
+};
+use hyper::{header::CONTENT_DISPOSITION, Body, HeaderMap, StatusCode};
+use hyper::{header::CONTENT_TYPE, Server};
+use serde_json::{json, Value};
 use std::path::Path;
 use std::sync::{Arc, Mutex};
+use std::{collections::HashMap, net::SocketAddr};
+use tokio_util::io::ReaderStream;
+use tower_http::services::{ServeDir, ServeFile};
+
+pub type SightingsContainer = Arc<Mutex<Vec<Sighting>>>;
 
 #[derive(Clone)]
 pub struct DetectorState {
@@ -19,17 +27,17 @@ pub struct DetectorState {
     pub mutex: Arc<Mutex<BirdDetector>>,
 }
 
-#[get("/generate_204")]
-fn generate_204() -> Status {
-    Status::NoContent
+async fn generate_204() -> impl IntoResponse {
+    (StatusCode::NO_CONTENT, "")
 }
 
-#[get("/sightings?<start>&<end>")]
-fn sightings(
-    sightings: &State<Arc<Mutex<Vec<Sighting>>>>,
-    start: Option<usize>,
-    end: Option<usize>,
-) -> Json<Vec<Sighting>> {
+async fn get_sightings(
+    Extension(sightings): Extension<SightingsContainer>,
+    extract::Query(params): extract::Query<HashMap<String, String>>,
+) -> extract::Json<Value> {
+    let start: Option<usize> = params.get("start").map(|x| x.parse().unwrap());
+    let end: Option<usize> = params.get("end").map(|x| x.parse().unwrap());
+
     let sightings = match sightings.lock() {
         Ok(sightings) => sightings.to_vec(),
         Err(err) => {
@@ -45,33 +53,45 @@ fn sightings(
         (Some(start), None) => sightings[start..].to_vec(),
         _ => sightings,
     };
-    Json(sightings)
+    json!(sightings).into()
 }
 
-#[get("/webcam")]
-fn webcam(capture: &'_ State<Arc<Mutex<WebCam>>>) -> (Status, (ContentType, ByteStream<MJpeg>)) {
-    let capture: Arc<Mutex<WebCam>> = { capture.inner().clone() };
+async fn webcam(Extension(capture): Extension<Arc<Mutex<WebCam>>>) -> Response<Body> {
+    let capture: Arc<Mutex<WebCam>> = capture.clone();
 
-    (
-        Status::Ok,
-        (
-            ContentType::new("multipart", "x-mixed-replace").with_params([("boundary", "frame")]),
-            ByteStream(MJpeg::new(capture)),
-        ),
-    )
+    let mjpeg = MJpeg::new(capture);
+
+    let mut headers = HeaderMap::new();
+    headers.insert(
+        CONTENT_TYPE,
+        "multipart/x-mixed-replace; boundary=frame".parse().unwrap(),
+    );
+
+    let body = Body::wrap_stream(mjpeg);
+
+    Response::builder()
+        .status(StatusCode::OK)
+        .header(CONTENT_TYPE, "multipart/x-mixed-replace; boundary=frame")
+        .body(body)
+        .unwrap()
 }
 
-#[get("/frame")]
-fn frame(capture: &'_ State<Arc<Mutex<WebCam>>>) -> (Status, (ContentType, Vec<u8>)) {
+async fn frame(Extension(capture): Extension<Arc<Mutex<WebCam>>>) -> Response<Body> {
     let frame = {
         let mut capture = capture.lock().unwrap();
         capture.bytes_jpeg().unwrap()
     };
-    (Status::Ok, (ContentType::JPEG, frame))
+    Response::builder()
+        .status(StatusCode::OK)
+        .header(CONTENT_TYPE, mime::IMAGE_JPEG.as_ref())
+        .body(Body::from(frame))
+        .unwrap()
 }
 
-#[get("/sightings/<id>")]
-async fn sighting(sightings: &State<Arc<Mutex<Vec<Sighting>>>>, id: String) -> Option<NamedFile> {
+async fn sighting(
+    Extension(sightings): Extension<SightingsContainer>,
+    extract::Path(id): extract::Path<String>,
+) -> Response<StreamBody<ReaderStream<tokio::fs::File>>> {
     let filename = {
         let sightings = sightings.lock().unwrap();
         let sighting = sightings
@@ -83,13 +103,33 @@ async fn sighting(sightings: &State<Arc<Mutex<Vec<Sighting>>>>, id: String) -> O
         format!("{}_{}.jpg", sighting.species, sighting.uuid)
     };
 
-    NamedFile::open(Path::new("sightings/").join(filename))
-        .await
-        .ok()
+    let file_path = Path::new("sightings/").join(&filename);
+    let file = tokio::fs::File::open(file_path).await.ok().unwrap();
+    let stream = ReaderStream::new(file);
+    let body = StreamBody::new(stream);
+
+    let mut headers = HeaderMap::new();
+    headers.insert(
+        CONTENT_DISPOSITION,
+        format!("attachment; filename={}", filename)
+            .parse()
+            .unwrap(),
+    );
+
+    Response::builder()
+        .status(StatusCode::OK)
+        .header(
+            CONTENT_DISPOSITION,
+            format!("attachment; filename={}", filename),
+        )
+        .body(body)
+        .unwrap()
 }
 
-#[delete("/sightings/<id>")]
-async fn delete_sighting(sightings: &State<Arc<Mutex<Vec<Sighting>>>>, id: String) {
+async fn delete_sighting(
+    Extension(sightings): Extension<SightingsContainer>,
+    extract::Path(id): extract::Path<String>,
+) {
     let filename = {
         let sightings = sightings.lock().unwrap();
         let sighting = sightings
@@ -112,20 +152,24 @@ async fn delete_sighting(sightings: &State<Arc<Mutex<Vec<Sighting>>>>, id: Strin
     save_to_file(sightings, "sightings/sightings.db").unwrap()
 }
 
-pub fn server(sightings: Arc<Mutex<Vec<Sighting>>>, capture: Arc<Mutex<WebCam>>) -> Rocket<Build> {
-    rocket::build()
-        .mount("/", FileServer::from("app/dist"))
-        .mount(
-            "/",
-            routes![
-                frame,
-                sightings,
-                sighting,
-                delete_sighting,
-                webcam,
-                generate_204
-            ],
-        )
-        .manage(sightings)
-        .manage(capture)
+pub async fn server(sightings: SightingsContainer, capture: Arc<Mutex<WebCam>>) {
+    let serve_dir =
+        ServeDir::new("app/dist").not_found_service(ServeFile::new("app/dist/index.html"));
+
+    let app = Router::new()
+        .nest_service("/", serve_dir.clone())
+        .route("/generate_204", get(generate_204))
+        .route("/sightings", get(get_sightings))
+        .route("/webcam", get(webcam))
+        .route("/frame", get(frame))
+        .route("/sightings/:id", get(sighting))
+        .route("/sightings/:id", delete(delete_sighting))
+        .layer(Extension(sightings.clone()))
+        .layer(Extension(capture));
+
+    let addr = SocketAddr::from(([127, 0, 0, 1], 8000));
+    let server = Server::bind(&addr).serve(app.into_make_service());
+
+    println!("listening on {}", addr);
+    server.await.unwrap();
 }

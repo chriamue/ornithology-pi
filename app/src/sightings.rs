@@ -75,14 +75,18 @@ impl Sightings {
         let start = self.start;
         let end = self.end;
         let sightings = self.sightings.clone();
-        let base_url = self.api_url.clone();
+        let mut base_url = self.api_url.clone();
+        if !base_url.ends_with("/") {
+            base_url.push_str("/");
+        }
+
         web_sys::console::log_1(
             &format!("Fetching sightings {} : {}-{}", base_url, start, end).into(),
         );
         wasm_bindgen_futures::spawn_local(async move {
             let fetched: Vec<Sighting> = reqwest::Client::new()
                 .get(&format!(
-                    "{}/sightings?start={}&end={}",
+                    "{}sightings?start={}&end={}",
                     base_url, start, end
                 ))
                 .send()
