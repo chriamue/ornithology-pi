@@ -1,9 +1,11 @@
 use yew::prelude::*;
+use yew_bootstrap::component::{Container, ContainerSize};
 
 #[function_component(About)]
 pub fn comp() -> Html {
     html! {
       <div class="about">
+        <Container class="bg-info" size={ContainerSize::ExtraLarge}>
           <p>{"
             The goal of this project is a raspberry pi device with a camera, that
             films your garden. If it detects a bird, it takes a picture and identifies
@@ -15,6 +17,7 @@ pub fn comp() -> Html {
             pictures.
             "}
           </p>
+        </Container>
       </div>
     }
 }

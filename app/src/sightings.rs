@@ -2,6 +2,8 @@ use chrono::{DateTime, NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
 use yew::prelude::*;
+use yew_bootstrap::component::Button;
+use yew_bootstrap::util::Color;
 
 use crate::contexts::{ApiUrl, ApiUrlContext};
 
@@ -112,14 +114,6 @@ impl Component for Sightings {
     }
 
     fn changed(&mut self, ctx: &Context<Self>, _old_props: &Self::Properties) -> bool {
-        web_sys::console::log_1(
-            &format!(
-                "Changed sightings {} : {}",
-                self.api_url,
-                ctx.props().api_url
-            )
-            .into(),
-        );
         if self.api_url != ctx.props().api_url {
             self.api_url = ctx.props().api_url.clone();
             self.fetch();
@@ -129,7 +123,7 @@ impl Component for Sightings {
         }
     }
 
-    fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
+    fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Msg::ClickLeft => {
                 self.prev();
@@ -162,17 +156,17 @@ impl Component for Sightings {
         html! {
                     <>
         <div class="nav">
-        <button class="btn btn-primary" onclick={onleftclick.clone()}>
-        {"<-"} </button>
-        <button class="btn btn-primary" onclick={onrightclick.clone()}>{"->"}</button>
+        <Button style={Color::Primary} onclick={onleftclick.clone()}>
+        {"<-"} </Button>
+        <Button style={Color::Primary} onclick={onrightclick.clone()}>{"->"}</Button>
         </div>
         <div id="images" class="row card justify-content-center d-grid gap-3">
             {details}
         </div>
         <div class="nav">
-        <button class="btn btn-primary" onclick={onleftclick}>
-        {"<-"} </button>
-        <button class="btn btn-primary" onclick={onrightclick}>{"->"}</button>
+        <Button style={Color::Primary} onclick={onleftclick}>
+        {"<-"} </Button>
+        <Button style={Color::Primary} onclick={onrightclick}>{"->"}</Button>
         </div>
                     </>
                 }

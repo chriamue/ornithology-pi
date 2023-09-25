@@ -1561,6 +1561,17 @@ dependencies = [
  "wasm-bindgen-futures",
  "web-sys",
  "yew",
+ "yew-bootstrap",
+]
+
+[[package]]
+name = "yew-bootstrap"
+version = "0.5.18"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "49d5b09fb08f433d1ea65b2f85d7a25e3ec35755fe796f2d2f8bc11fab299e26"
+dependencies = [
+ "log",
+ "yew",
 ]
 
 [[package]]

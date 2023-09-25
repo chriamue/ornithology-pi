@@ -15,12 +15,12 @@ impl Default for ApiUrl {
             .protocol()
             .unwrap_or_else(|_| String::from("http:"));
         let host = web_sys::window()
-        .unwrap()
-        .location()
-        .host()
-        .unwrap_or_else(|_| String::from("localhost:8080"));
+            .unwrap()
+            .location()
+            .host()
+            .unwrap_or_else(|_| String::from("localhost:8080"));
         Self {
-            inner: format!("{}//{}/", protocol, host)
+            inner: format!("{}//{}/", protocol, host),
         }
     }
 }

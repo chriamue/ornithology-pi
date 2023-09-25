@@ -1,4 +1,6 @@
 use yew::prelude::*;
+use yew_bootstrap::component::*;
+use yew_bootstrap::util::*;
 
 use crate::about::About;
 use crate::contexts::ApiUrlProvider;
@@ -15,8 +17,11 @@ pub fn app() -> Html {
         <ApiUrlProvider>
             <Header />
             <ServerInput />
+            <Line style={Color::Primary} />
             <Webcam />
+            <Line style={Color::Primary} />
             <SightingsContainer />
+            <Line style={Color::Primary} />
             <About />
             <Footer />
         </ApiUrlProvider>

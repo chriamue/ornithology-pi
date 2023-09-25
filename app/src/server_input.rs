@@ -2,6 +2,7 @@ use crate::contexts::ApiUrlContext;
 use wasm_bindgen::JsCast;
 use web_sys::{EventTarget, HtmlInputElement};
 use yew::prelude::*;
+use yew_bootstrap::{component::{Button, Container, ContainerSize}, util::Color};
 
 #[function_component(ServerInput)]
 pub fn server_input() -> Html {
@@ -22,12 +23,14 @@ pub fn server_input() -> Html {
 
     html! {
         <div>
+        <Container class="bg-primary" size={ContainerSize::Medium}>
             <input type="text" value={input_value.clone()} onchange={on_input} placeholder="Enter server URL" />
-            <button onclick={Callback::from(move |_| {
+            <Button style={Color::Secondary} onclick={Callback::from(move |_| {
                 web_sys::console::log_1(&format!("Server URL set to: {}", api_url.inner).into());
             })}>
                 {"Set Server URL"}
-            </button>
+            </Button>
+        </Container>
         </div>
     }
 }
