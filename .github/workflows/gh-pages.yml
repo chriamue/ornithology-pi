@@ -1,0 +1,34 @@
+name: GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - '*'
+
+jobs:
+  build_and_deploy_main:
+    name: Rust project for main branch
+    runs-on: ubuntu-22.04
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - uses: jetli/wasm-pack-action@v0.3.0
+        with:
+          version: "latest"
+
+      - run: rustup target add wasm32-unknown-unknown
+      - run: cargo install --locked trunk
+      - run: cd app && trunk build --release --public-url /ornithology-pi
+
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: ./app/dist
+          keep_files: true

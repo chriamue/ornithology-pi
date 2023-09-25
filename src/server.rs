@@ -114,7 +114,7 @@ async fn delete_sighting(sightings: &State<Arc<Mutex<Vec<Sighting>>>>, id: Strin
 
 pub fn server(sightings: Arc<Mutex<Vec<Sighting>>>, capture: Arc<Mutex<WebCam>>) -> Rocket<Build> {
     rocket::build()
-        .mount("/", FileServer::from("yew-app/dist"))
+        .mount("/", FileServer::from("app/dist"))
         .mount(
             "/",
             routes![
