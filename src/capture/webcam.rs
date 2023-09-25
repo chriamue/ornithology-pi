@@ -6,7 +6,7 @@ use nokhwa::pixel_format::RgbFormat;
 use nokhwa::utils::CameraIndex;
 use nokhwa::{
     query,
-    utils::{ApiBackend, RequestedFormat, RequestedFormatType, CameraFormat, FrameFormat},
+    utils::{ApiBackend, CameraFormat, FrameFormat, RequestedFormat, RequestedFormatType},
     Buffer, CallbackCamera,
 };
 use std::error::Error;
@@ -33,11 +33,11 @@ impl WebCam {
         nokhwa_initialize(|granted| {
             println!("Camera access granted {}", granted);
         });
-        
+
         let cameras = query(ApiBackend::Auto).unwrap();
         cameras.iter().for_each(|cam| println!("{:?}", cam));
-        
-                //let format = RequestedFormat::new::<RgbFormat>(RequestedFormatType::None);
+
+        //let format = RequestedFormat::new::<RgbFormat>(RequestedFormatType::None);
         let format = RequestedFormat::new::<RgbFormat>(RequestedFormatType::Exact(
             CameraFormat::new_from(width, height, FrameFormat::MJPEG, fps),
         ));
@@ -45,8 +45,7 @@ impl WebCam {
         // let camera_index = cameras.first().unwrap().index().clone(); // is video1 not video0
         let camera_index = CameraIndex::Index(0 as u32);
 
-        let mut device =
-            CallbackCamera::new(camera_index, format, callback).unwrap();
+        let mut device = CallbackCamera::new(camera_index, format, callback).unwrap();
         device.open_stream()?;
 
         let mut webcam = Self {
