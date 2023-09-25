@@ -1,5 +1,5 @@
 use chrono::{DateTime, NaiveDateTime, Utc};
-use reqwasm::http::Request;
+use reqwest::Request;
 use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
 use yew::prelude::*;
@@ -30,7 +30,7 @@ fn sighting_details(SightingProps { sighting }: &SightingProps) -> Html {
             <button title="remove" class="btn btn-danger" onclick={Callback::from(move |_| {
                 let uuid = uuid.clone();
                 wasm_bindgen_futures::spawn_local(async move {
-                        Request::delete(&format!("/sightings/{}", uuid))
+                    reqwest::Client::new().delete(&format!("/sightings/{}", uuid))
                             .send()
                             .await
                             .unwrap();
@@ -66,15 +66,15 @@ impl Sightings {
         let start = self.start;
         let end = self.end;
         let sightings = self.sightings.clone();
+        let base_url = web_sys::window().unwrap().origin();
         wasm_bindgen_futures::spawn_local(async move {
-            let fetched: Vec<Sighting> =
-                Request::get(&format!("/sightings?start={}&end={}", start, end))
-                    .send()
-                    .await
-                    .unwrap()
-                    .json()
-                    .await
-                    .unwrap();
+            let fetched: Vec<Sighting> = reqwest::Client::new()
+                .get(&format!("{}/sightings?start={}&end={}",base_url, start, end))
+                .send()
+                .await.unwrap()
+                .json()
+                .await
+                .unwrap();
             let mut sightings_lock = sightings.try_lock().unwrap();
             *sightings_lock = fetched;
         });
