@@ -1,4 +1,4 @@
-use image::{DynamicImage, GenericImageView};
+use image::DynamicImage;
 use lenna_birds_plugin::Birds;
 
 #[derive(Clone)]

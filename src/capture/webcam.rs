@@ -1,9 +1,14 @@
 use futures::Stream;
 use image::ImageBuffer;
 use image::Rgb;
-use nokhwa::CameraFormat;
-use nokhwa::FrameFormat;
-use nokhwa::ThreadedCamera;
+use nokhwa::nokhwa_initialize;
+use nokhwa::pixel_format::RgbFormat;
+use nokhwa::utils::CameraIndex;
+use nokhwa::{
+    query,
+    utils::{ApiBackend, RequestedFormat, RequestedFormatType, CameraFormat, FrameFormat},
+    Buffer, CallbackCamera,
+};
 use std::error::Error;
 use std::pin::Pin;
 use std::sync::{Arc, Mutex};
@@ -12,30 +17,37 @@ use std::task::Poll;
 
 use super::Capture;
 
-fn callback(_image: ImageBuffer<Rgb<u8>, Vec<u8>>) {}
+fn callback(_image: Buffer) {}
 
 pub struct WebCam {
     pub width: u32,
     pub height: u32,
     pub fps: u32,
     running: Arc<Mutex<bool>>,
-    device: ThreadedCamera,
+    device: CallbackCamera,
 }
 
 impl WebCam {
     pub fn new(width: u32, height: u32, fps: u32) -> Result<Self, Box<dyn Error>> {
         let running = Arc::new(Mutex::new(false));
-        let mut device = ThreadedCamera::new(
-            0,
-            Some(CameraFormat::new_from(
-                width,
-                height,
-                FrameFormat::YUYV,
-                fps,
-            )),
-        )
-        .unwrap();
-        device.open_stream(callback).unwrap();
+        nokhwa_initialize(|granted| {
+            println!("Camera access granted {}", granted);
+        });
+        
+        let cameras = query(ApiBackend::Auto).unwrap();
+        cameras.iter().for_each(|cam| println!("{:?}", cam));
+        
+                //let format = RequestedFormat::new::<RgbFormat>(RequestedFormatType::None);
+        let format = RequestedFormat::new::<RgbFormat>(RequestedFormatType::Exact(
+            CameraFormat::new_from(width, height, FrameFormat::MJPEG, fps),
+        ));
+
+        // let camera_index = cameras.first().unwrap().index().clone(); // is video1 not video0
+        let camera_index = CameraIndex::Index(0 as u32);
+
+        let mut device =
+            CallbackCamera::new(camera_index, format, callback).unwrap();
+        device.open_stream()?;
 
         let mut webcam = Self {
             width,
@@ -66,7 +78,8 @@ impl Default for WebCam {
 
 impl Capture for WebCam {
     fn frame(&mut self) -> Result<ImageBuffer<Rgb<u8>, Vec<u8>>, Box<dyn Error>> {
-        let frame = self.device.last_frame();
+        let buffer = self.device.last_frame()?;
+        let frame = buffer.decode_image::<RgbFormat>()?;
         Ok(frame)
     }
 }

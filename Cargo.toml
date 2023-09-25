@@ -1,6 +1,6 @@
 [package]
 name = "ornithology-pi"
-version = "0.8.0"
+version = "0.8.1"
 edition = "2021"
 authors = ["Christian <chriamue@gmail.com>"]
 description = "Capture birds in your garden, running on raspberry pi."
@@ -14,7 +14,7 @@ default = ["server", "camera"]
 full = ["bluetooth", "camera", "detect", "hotspot", "server"]
 pi = ["bluetooth", "camera", "detect", "server"]
 bluetooth = ["bluer"]
-camera = ["nokhwa/input-gst"]
+camera = ["nokhwa/input-native"]
 hotspot = ["wifi-rs"]
 server = ["base64", "rocket"]
 window = ["show-image/image"]
@@ -38,15 +38,15 @@ figment = "0.10.10"
 format-bytes = "0.1"
 futures = "0.3"
 
-image = { version = "0.23.14", default-features = false, features = [
+image = { version = "0.24.7", default-features = false, features = [
     "png",
     "jpeg",
 ] }
-imageproc = { version = "0.22", default-features = false }
+imageproc = { version = "0.23", default-features = false }
 lenna_core = { git = "https://github.com/lenna-project/lenna-core", branch = "main", optional = true }
 lenna_birds_plugin = { git = "https://github.com/lenna-project/birds-plugin", branch = "main", default-features = false, optional = true }
 lenna_yolo_plugin = { git = "https://github.com/lenna-project/yolo-plugin", branch = "main", default-features = false, optional = true }
-nokhwa = { version = "0.9.4", features = ["input-v4l", "output-threaded"] }
+nokhwa = { version = "0.10.4", features = ["output-threaded"] }
 tract-onnx = { version = "0.17", optional = true }
 
 rand = "0.8"
