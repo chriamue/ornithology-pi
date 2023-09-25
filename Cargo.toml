@@ -30,11 +30,11 @@ detect = [
 [dependencies]
 async-trait = "0.1"
 atoi = "1.0.0"
-base64 = { version = "0.13.0", optional = true }
+base64 = { version = "0.13.1", optional = true }
 bluer = { version = "0.13", optional = true }
-bytes = "1.1.0"
+bytes = "1.5.0"
 chrono = "0.4"
-figment = "0.10.6"
+figment = "0.10.10"
 format-bytes = "0.1"
 futures = "0.3"
 
@@ -57,8 +57,8 @@ show-image = { version = "0.10.1", optional = true }
 uuid = { version = "0.8", features = ["serde", "v4"] }
 pnet = "0.29.0"
 pretty_env_logger = "0.2"
-rocket = { version = "0.5.0-rc.2", features = ["json"], optional = true }
-tokio = { version = "1.13", features = ["full"] }
+rocket = { version = "0.5.0-rc.3", features = ["json"], optional = true }
+tokio = { version = "1.32", features = ["full"] }
 tokio-serde = { version = "0.8", features = [
     "bincode",
     "cbor",
