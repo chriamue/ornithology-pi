@@ -1,41 +1,42 @@
-#[cfg(feature = "detect")]
-pub mod detector;
-#[cfg(feature = "detect")]
-pub use detector::BirdDetector;
+// Publicly re-exporting types for external use.
+pub use self::{
+    capture::{Capture, WebCam},
+    config::Config,
+    mjpeg::MJpeg,
+    sighting::{DataSighting, Sighting},
+};
 
+// Type aliases for convenience.
+pub type Error = Box<dyn std::error::Error + Send + Sync>;
+pub type Result<T> = std::result::Result<T, Error>;
+
+// Modules related to capturing and processing images.
 pub mod capture;
-pub use capture::Capture;
-pub use capture::WebCam;
-
 pub mod config;
-pub use config::Config;
-
 pub mod mjpeg;
-pub use mjpeg::MJpeg;
-
-#[cfg(feature = "detect")]
-pub mod crop;
-#[cfg(feature = "detect")]
-pub use crop::Crop;
-#[cfg(feature = "detect")]
-pub mod label;
-#[cfg(feature = "detect")]
-pub use label::Label;
-
 pub mod sighting;
-pub use sighting::{DataSighting, Sighting};
 
+// Error handling module.
 pub mod errors;
 
+// Observer module.
 pub mod observer;
 
+#[cfg(feature = "detect")]
+pub mod detect;
+
+// Feature-specific modules and exports.
+#[cfg(feature = "detect")]
+pub use self::{detect::BirdDetector, detect::Crop, detect::Label};
+
+// Bluetooth feature module.
 #[cfg(feature = "bluetooth")]
 pub mod bluetooth;
 
+// Hotspot feature module.
 #[cfg(feature = "hotspot")]
 pub mod hotspot;
+
+// Server feature module.
 #[cfg(feature = "server")]
 pub mod server;
-
-pub type Error = Box<dyn std::error::Error + Send + Sync>;
-pub type Result<T> = std::result::Result<T, Error>;

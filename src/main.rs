@@ -6,7 +6,7 @@ use ornithology_pi::hotspot::Hotspot;
 #[cfg(feature = "server")]
 use ornithology_pi::server::server;
 #[cfg(feature = "detect")]
-use ornithology_pi::{detector::Detector, observer::Observable, BirdDetector};
+use ornithology_pi::{detect::Detector, observer::Observable, BirdDetector};
 use ornithology_pi::{observer::Observer, DataSighting, Sighting, WebCam};
 use std::sync::{Arc, Mutex};
 #[cfg(feature = "detect")]
