@@ -10,7 +10,7 @@ use axum::{
     routing::{delete, get},
     Extension, Router,
 };
-use hyper::{header::CONTENT_DISPOSITION, Body, HeaderMap, StatusCode};
+use hyper::{header::CONTENT_DISPOSITION, Body, StatusCode};
 use hyper::{header::CONTENT_TYPE, Server};
 use serde_json::{json, Value};
 use std::path::Path;
@@ -20,6 +20,35 @@ use tokio_util::io::ReaderStream;
 use tower_http::services::{ServeDir, ServeFile};
 
 pub type SightingsContainer = Arc<Mutex<Vec<Sighting>>>;
+
+#[derive(Debug)]
+enum AppError {
+    LockError,
+    NotFound,
+    ParseError,
+    IoError,
+    ResponseBuildError,
+}
+
+impl IntoResponse for AppError {
+    fn into_response(self) -> Response {
+        let (status, error_message) = match self {
+            AppError::LockError => (StatusCode::INTERNAL_SERVER_ERROR, "Lock error"),
+            AppError::NotFound => (StatusCode::NOT_FOUND, "Not found"),
+            AppError::ParseError => (StatusCode::BAD_REQUEST, "Parse error"),
+            AppError::IoError => (StatusCode::INTERNAL_SERVER_ERROR, "IO error"),
+            AppError::ResponseBuildError => {
+                (StatusCode::INTERNAL_SERVER_ERROR, "Response build error")
+            }
+        };
+
+        let body = Json(json!({
+            "error": error_message,
+        }));
+
+        (status, body).into_response()
+    }
+}
 
 #[derive(Clone)]
 pub struct DetectorState {
@@ -34,87 +63,80 @@ async fn generate_204() -> impl IntoResponse {
 async fn get_sightings(
     Extension(sightings): Extension<SightingsContainer>,
     extract::Query(params): extract::Query<HashMap<String, String>>,
-) -> extract::Json<Value> {
-    let start: Option<usize> = params.get("start").map(|x| x.parse().unwrap());
-    let end: Option<usize> = params.get("end").map(|x| x.parse().unwrap());
+) -> Result<Json<Value>, AppError> {
+    let start: Option<usize> = params
+        .get("start")
+        .map(|x| x.parse::<usize>())
+        .transpose()
+        .map_err(|_| AppError::ParseError)?;
+    let end: Option<usize> = params
+        .get("end")
+        .map(|x| x.parse::<usize>())
+        .transpose()
+        .map_err(|_| AppError::ParseError)?;
 
-    let sightings = match sightings.lock() {
-        Ok(sightings) => sightings.to_vec(),
-        Err(err) => {
-            println!("{}", err);
-            Vec::new()
-        }
-    };
+    let sightings = sightings.lock().map_err(|_| AppError::LockError)?;
     let sightings = match (start, end) {
         (Some(start), Some(end)) => {
             let end = end.min(sightings.len()).max(0);
             sightings[start.max(0).min(end)..end].to_vec()
         }
         (Some(start), None) => sightings[start..].to_vec(),
-        _ => sightings,
+        _ => sightings.to_vec(),
     };
-    json!(sightings).into()
+    Ok(Json(json!(sightings)))
 }
 
-async fn webcam(Extension(capture): Extension<Arc<Mutex<WebCam>>>) -> Response<Body> {
+async fn webcam(
+    Extension(capture): Extension<Arc<Mutex<WebCam>>>,
+) -> Result<Response<Body>, AppError> {
     let capture: Arc<Mutex<WebCam>> = capture.clone();
 
     let mjpeg = MJpeg::new(capture);
-
-    let mut headers = HeaderMap::new();
-    headers.insert(
-        CONTENT_TYPE,
-        "multipart/x-mixed-replace; boundary=frame".parse().unwrap(),
-    );
-
     let body = Body::wrap_stream(mjpeg);
 
     Response::builder()
         .status(StatusCode::OK)
         .header(CONTENT_TYPE, "multipart/x-mixed-replace; boundary=frame")
         .body(body)
-        .unwrap()
+        .map_err(|_| AppError::ResponseBuildError)
 }
 
-async fn frame(Extension(capture): Extension<Arc<Mutex<WebCam>>>) -> Response<Body> {
+async fn frame(
+    Extension(capture): Extension<Arc<Mutex<WebCam>>>,
+) -> Result<Response<Body>, AppError> {
     let frame = {
-        let mut capture = capture.lock().unwrap();
+        let mut capture = capture.lock().map_err(|_| AppError::LockError)?;
         capture.bytes_jpeg().unwrap()
     };
     Response::builder()
         .status(StatusCode::OK)
         .header(CONTENT_TYPE, mime::IMAGE_JPEG.as_ref())
         .body(Body::from(frame))
-        .unwrap()
+        .map_err(|_| AppError::ResponseBuildError)
 }
 
 async fn sighting(
     Extension(sightings): Extension<SightingsContainer>,
     extract::Path(id): extract::Path<String>,
-) -> Response<StreamBody<ReaderStream<tokio::fs::File>>> {
+) -> Result<Response<StreamBody<ReaderStream<tokio::fs::File>>>, AppError> {
     let filename = {
-        let sightings = sightings.lock().unwrap();
+        let sightings = sightings.lock().map_err(|_| AppError::LockError)?;
         let sighting = sightings
             .iter()
             .filter(|sighting| sighting.uuid == id)
             .last()
-            .cloned();
-        let sighting = sighting.unwrap();
+            .cloned()
+            .ok_or(AppError::NotFound)?;
         format!("{}_{}.jpg", sighting.species, sighting.uuid)
     };
 
     let file_path = Path::new("sightings/").join(&filename);
-    let file = tokio::fs::File::open(file_path).await.ok().unwrap();
+    let file = tokio::fs::File::open(file_path)
+        .await
+        .map_err(|_| AppError::IoError)?;
     let stream = ReaderStream::new(file);
     let body = StreamBody::new(stream);
-
-    let mut headers = HeaderMap::new();
-    headers.insert(
-        CONTENT_DISPOSITION,
-        format!("attachment; filename={}", filename)
-            .parse()
-            .unwrap(),
-    );
 
     Response::builder()
         .status(StatusCode::OK)
@@ -123,33 +145,35 @@ async fn sighting(
             format!("attachment; filename={}", filename),
         )
         .body(body)
-        .unwrap()
+        .map_err(|_| AppError::ResponseBuildError)
 }
 
 async fn delete_sighting(
     Extension(sightings): Extension<SightingsContainer>,
     extract::Path(id): extract::Path<String>,
-) {
+) -> Result<(), AppError> {
     let filename = {
-        let sightings = sightings.lock().unwrap();
+        let sightings = sightings.lock().map_err(|_| AppError::LockError)?;
         let sighting = sightings
             .iter()
             .filter(|sighting| sighting.uuid == id)
             .last()
-            .cloned();
-        let sighting = sighting.unwrap();
+            .cloned()
+            .ok_or(AppError::NotFound)?;
         format!("{}_{}.jpg", sighting.species, sighting.uuid)
     };
 
-    std::fs::remove_file(Path::new("sightings/").join(filename)).unwrap();
-
-    let sightings = {
-        let mut sightings = sightings.lock().unwrap();
-        let index = sightings.iter().position(|x| x.uuid == id).unwrap();
-        sightings.remove(index);
-        sightings.to_vec()
-    };
-    save_to_file(sightings, "sightings/sightings.db").unwrap()
+    tokio::fs::remove_file(Path::new("sightings/").join(filename))
+        .await
+        .map_err(|_| AppError::IoError)?;
+    let mut sightings = sightings.lock().map_err(|_| AppError::LockError)?;
+    let index = sightings
+        .iter()
+        .position(|x| x.uuid == id)
+        .ok_or(AppError::NotFound)?;
+    sightings.remove(index);
+    save_to_file(sightings.to_vec(), "sightings/sightings.db").map_err(|_| AppError::IoError)?;
+    Ok(())
 }
 
 pub async fn server(sightings: SightingsContainer, capture: Arc<Mutex<WebCam>>) {
