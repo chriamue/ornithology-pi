@@ -1,3 +1,5 @@
+#[cfg(feature = "detect")]
+use ornithology_pi::bird_observer::run_detector;
 #[cfg(feature = "bluetooth")]
 use ornithology_pi::bluetooth::run_bluetooth;
 use ornithology_pi::config;
@@ -5,58 +7,8 @@ use ornithology_pi::config;
 use ornithology_pi::hotspot::Hotspot;
 #[cfg(feature = "server")]
 use ornithology_pi::server::server;
-#[cfg(feature = "detect")]
-use ornithology_pi::{detect::Detector, observer::Observable, BirdDetector};
-use ornithology_pi::{observer::Observer, DataSighting, Sighting, WebCam};
+use ornithology_pi::{Sighting, WebCam};
 use std::sync::{Arc, Mutex};
-#[cfg(feature = "detect")]
-use std::{thread, time};
-
-struct BirdObserver {
-    pub sightings: Arc<Mutex<Vec<Sighting>>>,
-}
-
-unsafe impl Send for BirdObserver {}
-unsafe impl Sync for BirdObserver {}
-
-impl BirdObserver {
-    fn save(&self, sighting: DataSighting) {
-        let image = sighting.1;
-        image
-            .save(format!(
-                "sightings/{}_{}.jpg",
-                sighting.0.species, sighting.0.uuid
-            ))
-            .unwrap();
-        sighting.0.save("sightings/sightings.db").unwrap();
-    }
-}
-
-impl Observer for BirdObserver {
-    fn notify(&self, sighting: DataSighting) {
-        let mut sightings = self.sightings.lock().unwrap();
-        sightings.push(sighting.0.clone());
-        drop(sightings);
-        println!("{:?}", sighting.0.species);
-        self.save(sighting);
-    }
-}
-
-#[cfg(feature = "detect")]
-async fn run_detector(sightings: Arc<Mutex<Vec<Sighting>>>, capture: Arc<Mutex<WebCam>>) {
-    let observer = BirdObserver { sightings };
-
-    let mut birddetector = BirdDetector::new(capture);
-
-    birddetector.register(Box::new(observer));
-
-    let seconds = time::Duration::from_secs(2);
-
-    loop {
-        birddetector.detect_next();
-        thread::sleep(seconds);
-    }
-}
 
 #[tokio::main]
 async fn main() {
