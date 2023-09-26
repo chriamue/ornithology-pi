@@ -7,6 +7,6 @@ width = 640
 height = 480
 fps = 30
 
-[release]
+[default.server]
 port = 8000
 address = "0.0.0.0"

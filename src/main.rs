@@ -81,7 +81,7 @@ async fn main() {
     hotspot.start();
     #[cfg(feature = "server")]
     {
-        let launcher = server(sightings.clone(), capture.clone());
+        let launcher = server(&config, sightings.clone(), capture.clone());
         let _launched = launcher.await;
     }
 

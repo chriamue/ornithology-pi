@@ -1,6 +1,6 @@
-use crate::sighting::save_to_file;
 #[cfg(feature = "detect")]
 use crate::BirdDetector;
+use crate::{sighting::save_to_file, Config};
 use crate::{Capture, MJpeg, Sighting, WebCam};
 use axum::{
     body::StreamBody,
@@ -176,7 +176,7 @@ async fn delete_sighting(
     Ok(())
 }
 
-pub async fn server(sightings: SightingsContainer, capture: Arc<Mutex<WebCam>>) {
+pub async fn server(config: &Config, sightings: SightingsContainer, capture: Arc<Mutex<WebCam>>) {
     let serve_dir =
         ServeDir::new("app/dist").not_found_service(ServeFile::new("app/dist/index.html"));
 
@@ -191,7 +191,7 @@ pub async fn server(sightings: SightingsContainer, capture: Arc<Mutex<WebCam>>) 
         .layer(Extension(sightings.clone()))
         .layer(Extension(capture));
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], 8000));
+    let addr = SocketAddr::new(config.server.address.parse().unwrap(), config.server.port);
     let server = Server::bind(&addr).serve(app.into_make_service());
 
     println!("listening on {}", addr);
