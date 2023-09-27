@@ -68,7 +68,7 @@ tokio-serde = { version = "0.8", features = [
 ] }
 tokio-util = { version = "0.7.9", features = ["io"] }
 tower = { version = "0.4", features = ["util"], optional = true }
-tower-http = { version = "0.4.4", features = ["fs", "trace"], optional = true }
+tower-http = { version = "0.4.4", features = ["fs", "trace", "cors"], optional = true }
 wifi-rs = { git = "https://github.com/tnkemdilim/wifi-rs.git", optional = true }
 
 [package.metadata.deb]

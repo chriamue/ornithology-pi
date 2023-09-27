@@ -8,7 +8,7 @@ use crate::footer::Footer;
 use crate::header::Header;
 use crate::server_input::ServerInput;
 use crate::sightings::SightingsContainer;
-use crate::webcam::Webcam;
+use crate::webcam::WebcamContainer;
 
 #[function_component(App)]
 pub fn app() -> Html {
@@ -18,7 +18,7 @@ pub fn app() -> Html {
             <Header />
             <ServerInput />
             <Line style={Color::Primary} />
-            <Webcam />
+            <WebcamContainer />
             <Line style={Color::Primary} />
             <SightingsContainer />
             <Line style={Color::Primary} />

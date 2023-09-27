@@ -16,29 +16,32 @@ pub struct Sighting {
 
 #[derive(Clone, Properties, PartialEq)]
 struct SightingProps {
+    api_url: Option<String>,
     sighting: Sighting,
 }
 
 #[function_component(SightingDetails)]
-fn sighting_details(SightingProps { sighting }: &SightingProps) -> Html {
+fn sighting_details(SightingProps { api_url, sighting }: &SightingProps) -> Html {
     let datetime =
         DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(sighting.timestamp, 0), Utc);
 
     let uuid = sighting.uuid.clone();
     html! {
-        <div>
-            <h3>{ sighting.species.clone() }</h3>
-            <p>{datetime}</p>
-            <img src={format!("/sightings/{}", sighting.uuid.clone())} title={sighting.species.clone()} />
-            <button title="remove" class="btn btn-danger" onclick={Callback::from(move |_| {
-                let uuid = uuid.clone();
-                wasm_bindgen_futures::spawn_local(async move {
-                    reqwest::Client::new().delete(&format!("/sightings/{}", uuid))
-                            .send()
-                            .await
-                            .unwrap();
-                });
-            })}>{"X"}</button>
+        <div class="col-md-4">
+            <div class="card">
+                <h3>{ sighting.species.clone() }</h3>
+                <p>{datetime}</p>
+                <img src={format!("{}/sightings/{}", api_url.as_ref().unwrap_or(&"".to_string()), sighting.uuid.clone())} title={sighting.species.clone()} />
+                <button title="remove" class="btn btn-danger" onclick={Callback::from(move |_| {
+                    let uuid = uuid.clone();
+                    wasm_bindgen_futures::spawn_local(async move {
+                        reqwest::Client::new().delete(&format!("/sightings/{}", uuid))
+                                .send()
+                                .await
+                                .unwrap();
+                    });
+                })}>{"X"}</button>
+            </div>
         </div>
     }
 }
@@ -151,7 +154,7 @@ impl Component for Sightings {
             let locked: Vec<Sighting> = self.sightings.try_lock().unwrap().to_vec();
             let details = locked.into_iter().map(|sighting| {
                 html! {
-                  <SightingDetails sighting={sighting.clone()} />
+                  <SightingDetails api_url={self.api_url.clone()} sighting={sighting.clone()} />
                 }
             });
             details.collect()

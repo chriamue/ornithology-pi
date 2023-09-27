@@ -10,6 +10,7 @@ use axum::{
     routing::{delete, get},
     Extension, Router,
 };
+use hyper::Method;
 use hyper::{header::CONTENT_DISPOSITION, Body, StatusCode};
 use hyper::{header::CONTENT_TYPE, Server};
 use serde_json::{json, Value};
@@ -17,6 +18,7 @@ use std::path::Path;
 use std::sync::{Arc, Mutex};
 use std::{collections::HashMap, net::SocketAddr};
 use tokio_util::io::ReaderStream;
+use tower_http::cors::CorsLayer;
 use tower_http::services::{ServeDir, ServeFile};
 
 pub type SightingsContainer = Arc<Mutex<Vec<Sighting>>>;
@@ -177,6 +179,10 @@ async fn delete_sighting(
 }
 
 pub async fn server(config: &Config, sightings: SightingsContainer, capture: Arc<Mutex<WebCam>>) {
+    let cors = CorsLayer::new()
+        .allow_methods([Method::GET, Method::POST])
+        .allow_origin(tower_http::cors::Any);
+
     let serve_dir =
         ServeDir::new("app/dist").not_found_service(ServeFile::new("app/dist/index.html"));
 
@@ -189,7 +195,8 @@ pub async fn server(config: &Config, sightings: SightingsContainer, capture: Arc
         .route("/sightings/:id", get(sighting))
         .route("/sightings/:id", delete(delete_sighting))
         .layer(Extension(sightings.clone()))
-        .layer(Extension(capture));
+        .layer(Extension(capture))
+        .layer(cors);
 
     let addr = SocketAddr::new(config.server.address.parse().unwrap(), config.server.port);
     let server = Server::bind(&addr).serve(app.into_make_service());

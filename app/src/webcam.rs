@@ -1,4 +1,6 @@
 use yew::prelude::*;
+use crate::contexts::ApiUrl;
+use crate::contexts::ApiUrlContext;
 
 pub enum Msg {
     Click,
@@ -9,13 +11,18 @@ enum Source {
     Frame,
 }
 
+#[derive(Clone, Properties, PartialEq)]
+pub struct Props {
+    pub api_url: Option<String>,
+}
+
 pub struct Webcam {
     source: Source,
 }
 
 impl Component for Webcam {
     type Message = Msg;
-    type Properties = ();
+    type Properties = Props;
 
     fn create(_ctx: &Context<Self>) -> Self {
         Self {
@@ -42,16 +49,30 @@ impl Component for Webcam {
         match self.source {
             Source::Frame => html! {
                 <div class="row card justify-content-center d-grid gap-3">
-                    <img id="webcam" src="/frame" title="webcam" {onclick} />
+                    <img id="webcam" src={format!("{}/frame", ctx.props().api_url.as_ref().unwrap_or(&"".to_string()))} title="webcam" {onclick} />
                 </div>
             },
             Source::Webcam => html! {
                 <div class="row card justify-content-center d-grid gap-3">
-                    <img id="webcam" src="/webcam" title="webcam" {onclick} />
+                    <img id="webcam" src={format!("{}/webcam", ctx.props().api_url.as_ref().unwrap_or(&"".to_string()))} title="webcam" {onclick} />
                 </div>
             },
         }
     }
 
     fn rendered(&mut self, _ctx: &Context<Self>, _first_render: bool) {}
+}
+
+#[function_component()]
+pub fn WebcamContainer() -> Html {
+    let api_url: String = match use_context::<ApiUrlContext>() {
+        Some(api_url) => api_url.inner.clone(),
+        None => ApiUrl::default().inner,
+    };
+
+    html! {
+        <div class="container">
+            <Webcam api_url={api_url} />
+        </div>
+    }
 }

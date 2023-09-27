@@ -1,5 +1,4 @@
 use std::rc::Rc;
-use web_sys::Url;
 use yew::prelude::*;
 
 #[derive(Clone, Debug, PartialEq)]
