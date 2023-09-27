@@ -7,7 +7,6 @@ use std::pin::Pin;
 use std::sync::{Arc, Mutex};
 use std::task::Context;
 use std::task::Poll;
-use std::thread;
 use tokio::time;
 
 const FRAME_MILLIS: u32 = 1000 / 2;
@@ -25,21 +24,29 @@ impl StdError for MJpegError {}
 
 pub struct MJpeg {
     capture: Arc<Mutex<WebCam>>,
+    last: time::Instant,
 }
 
 impl MJpeg {
     pub fn new(capture: Arc<Mutex<WebCam>>) -> Self {
-        Self { capture }
+        Self {
+            capture,
+            last: time::Instant::now(),
+        }
     }
 }
 
 impl Stream for MJpeg {
     type Item = std::result::Result<Vec<u8>, Box<dyn StdError + Send + Sync>>;
 
-    fn poll_next(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
-        let start = time::Instant::now();
+    fn poll_next(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
+        let this = self.get_mut();
+        if this.last.elapsed().as_millis() < FRAME_MILLIS as u128 {
+            cx.waker().wake_by_ref();
+            return Poll::Pending;
+        }
 
-        let buf: Vec<u8> = match self.capture.lock() {
+        let buf: Vec<u8> = match this.capture.lock() {
             Ok(mut capture) => match capture.bytes_jpeg() {
                 Ok(buf) => buf,
                 Err(_) => return Poll::Ready(Some(Err(Box::new(MJpegError)))),
@@ -48,10 +55,8 @@ impl Stream for MJpeg {
         };
 
         let data = format_bytes!(b"\r\n--frame\r\nContent-Type: image/jpeg\r\n\r\n{}", &buf);
-        let duration = time::Instant::now() - start;
-        thread::sleep(time::Duration::from_millis(
-            (FRAME_MILLIS as i32 - duration.as_millis() as i32).max(0) as u64,
-        ));
+
+        this.last = time::Instant::now();
         Poll::Ready(Some(Ok(data)))
     }
 

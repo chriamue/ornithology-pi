@@ -47,6 +47,12 @@ apt install libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev v4l-utils
   cargo run --features="window" example window
   ```
 
+- **Web App with yolov8 backend**: Start the web app and navigate to `http://localhost:8080`.
+
+  ```sh
+  cargo run --features="server,detect,yolov8" --no-default-features --release
+  ```
+
 ## 📦 Building and Installation
 
 ### Build Debian Package
