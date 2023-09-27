@@ -4,5 +4,6 @@ pub mod contexts;
 pub mod footer;
 pub mod header;
 pub mod server_input;
+pub mod sighting;
 pub mod sightings;
 pub mod webcam;
