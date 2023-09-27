@@ -113,4 +113,17 @@ mod tests {
         let sightings = load_from_file("test.db").unwrap();
         assert_eq!(sightings.len(), 2);
     }
+
+    #[test]
+    fn compare_option_str() {
+        let s1: String = String::from("test");
+        let s2: &str = "test";
+
+        let optional_s1: Option<String> = Some(s1.clone());
+        let optional_s2: Option<&str> = Some(s2.clone());
+        assert!(s1 == s2);
+        assert!(optional_s1.as_deref() == optional_s2);
+        // optional_s1 is not destructed
+        assert!(optional_s1 == optional_s2.map(|s| s.to_string()));
+    }
 }

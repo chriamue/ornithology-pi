@@ -27,7 +27,6 @@ pub mod bird_observer;
 #[cfg(feature = "detect")]
 pub mod detect;
 
-// Feature-specific modules and exports.
 #[cfg(feature = "detect")]
 pub use self::{
     bird_observer::run_detector, bird_observer::BirdObserver, detect::BirdDetector, detect::Crop,

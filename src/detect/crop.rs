@@ -2,7 +2,12 @@ use image::{imageops, DynamicImage, GenericImageView};
 use lenna_yolo_plugin::{detection::Detection, Yolo};
 
 const THREASHOLD: f32 = 0.5;
+
+#[cfg(feature = "yolo")]
 const BIRD_CLASS: usize = 2;
+#[cfg(feature = "yolov8")]
+const BIRD_CLASS: usize = 14;
+
 const BORDER: u32 = 50;
 
 #[derive(Clone)]
@@ -16,6 +21,9 @@ pub struct Crop {
 impl Crop {
     pub fn crop(&self, image: DynamicImage) -> Vec<(Detection, DynamicImage)> {
         let (width, height) = image.dimensions();
+        if let (0, 0) = (width, height) {
+            return Vec::new();
+        }
         let detections = self.detect(&image);
         let detections: Vec<(Detection, DynamicImage)> = detections
             .iter()
