@@ -106,6 +106,35 @@ To enable the service on boot:
 sudo systemctl enable ornithology-pi
 ```
 
+## 🛠️ Using the Makefile
+
+For ease of use, OrnithologyPi includes a `Makefile` that automates various tasks, allowing you to focus on development without worrying about the underlying commands. Below are the available make commands and their descriptions:
+
+- `make server`: This command runs the server with specific features enabled: `server`, `detect`, and `yolov8`. It runs the server in release mode with no default features.
+- `make build`: This command builds the project.
+- `make test`: This command runs all the tests in the project.
+- `make app`: This command serves the app, allowing you to access it from a web browser.
+- `make mobile`: This command runs mobile development for Android.
+
+### How to Use the Makefile
+
+1. Open a terminal in the project's root directory.
+2. Type the make command you want to use, for example, `make server` to run the server, and press `Enter`.
+
+This will execute the corresponding command as defined in the `Makefile`, saving you time and ensuring consistency in development tasks.
+
+### Example
+
+To run the server, simply type the following command in your terminal and press `Enter`:
+
+```sh
+make server
+```
+
+This will execute the `cargo run --features="server,detect,yolov8" --no-default-features --release` command as defined in the `Makefile`.
+
+By using the `Makefile`, you can easily and consistently manage and run tasks without having to remember or type out the full commands each time.
+
 ## 🐞 Debugging
 
 ### Bluetooth Debugging
