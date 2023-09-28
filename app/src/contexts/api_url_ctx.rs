@@ -1,3 +1,4 @@
+use gloo_storage::{LocalStorage, Storage};
 use std::rc::Rc;
 use yew::prelude::*;
 
@@ -8,18 +9,23 @@ pub struct ApiUrl {
 
 impl Default for ApiUrl {
     fn default() -> Self {
-        let protocol = web_sys::window()
-            .unwrap()
-            .location()
-            .protocol()
-            .unwrap_or_else(|_| String::from("http:"));
-        let host = web_sys::window()
-            .unwrap()
-            .location()
-            .host()
-            .unwrap_or_else(|_| String::from("localhost:8080"));
-        Self {
-            inner: format!("{}//{}/", protocol, host),
+        match LocalStorage::get("api_url") {
+            Ok(Some(api_url)) => Self { inner: api_url },
+            _ => {
+                let protocol = web_sys::window()
+                    .unwrap()
+                    .location()
+                    .protocol()
+                    .unwrap_or_else(|_| String::from("http:"));
+                let host = web_sys::window()
+                    .unwrap()
+                    .location()
+                    .host()
+                    .unwrap_or_else(|_| String::from("localhost:8080"));
+                Self {
+                    inner: format!("{}//{}/", protocol, host),
+                }
+            }
         }
     }
 }
@@ -28,6 +34,7 @@ impl Reducible for ApiUrl {
     type Action = String;
 
     fn reduce(self: Rc<Self>, action: Self::Action) -> Rc<Self> {
+        LocalStorage::set("api_url", &action).unwrap();
         ApiUrl { inner: action }.into()
     }
 }

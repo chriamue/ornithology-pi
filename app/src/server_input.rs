@@ -2,7 +2,10 @@ use crate::contexts::ApiUrlContext;
 use wasm_bindgen::JsCast;
 use web_sys::{EventTarget, HtmlInputElement};
 use yew::prelude::*;
-use yew_bootstrap::{component::{Button, Container, ContainerSize}, util::Color};
+use yew_bootstrap::{
+    component::{Button, Container, ContainerSize},
+    util::Color,
+};
 
 #[function_component(ServerInput)]
 pub fn server_input() -> Html {

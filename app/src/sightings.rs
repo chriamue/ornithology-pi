@@ -1,7 +1,5 @@
 use crate::contexts::{ApiUrl, ApiUrlContext};
 use crate::sighting::{Sighting, SightingDetails};
-use chrono::{DateTime, NaiveDateTime, Utc};
-use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
 use yew::prelude::*;
 use yew_bootstrap::component::{Button, ButtonSize};

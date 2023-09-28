@@ -1,6 +1,6 @@
-use yew::prelude::*;
 use crate::contexts::ApiUrl;
 use crate::contexts::ApiUrlContext;
+use yew::prelude::*;
 
 pub enum Msg {
     Click,
@@ -45,7 +45,12 @@ impl Component for Webcam {
 
     fn view(&self, ctx: &Context<Self>) -> Html {
         let onclick = ctx.link().callback(|_| Msg::Click);
-        let mut base_url = ctx.props().api_url.as_ref().unwrap_or(&"".to_string()).to_string();
+        let mut base_url = ctx
+            .props()
+            .api_url
+            .as_ref()
+            .unwrap_or(&"".to_string())
+            .to_string();
         if !base_url.ends_with("/") {
             base_url.push_str("/");
         }
