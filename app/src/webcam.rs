@@ -45,16 +45,20 @@ impl Component for Webcam {
 
     fn view(&self, ctx: &Context<Self>) -> Html {
         let onclick = ctx.link().callback(|_| Msg::Click);
+        let mut base_url = ctx.props().api_url.as_ref().unwrap_or(&"".to_string()).to_string();
+        if !base_url.ends_with("/") {
+            base_url.push_str("/");
+        }
 
         match self.source {
             Source::Frame => html! {
                 <div class="row card justify-content-center d-grid gap-3">
-                    <img id="webcam" src={format!("{}/frame", ctx.props().api_url.as_ref().unwrap_or(&"".to_string()))} title="webcam" {onclick} />
+                    <img id="webcam" src={format!("{}frame", base_url)} title="webcam" {onclick} />
                 </div>
             },
             Source::Webcam => html! {
                 <div class="row card justify-content-center d-grid gap-3">
-                    <img id="webcam" src={format!("{}/webcam", ctx.props().api_url.as_ref().unwrap_or(&"".to_string()))} title="webcam" {onclick} />
+                    <img id="webcam" src={format!("{}webcam", base_url)} title="webcam" {onclick} />
                 </div>
             },
         }

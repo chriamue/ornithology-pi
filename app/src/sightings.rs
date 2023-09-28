@@ -1,11 +1,11 @@
+use crate::contexts::{ApiUrl, ApiUrlContext};
+use crate::sighting::{Sighting, SightingDetails};
 use chrono::{DateTime, NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
 use yew::prelude::*;
-use yew_bootstrap::component::Button;
+use yew_bootstrap::component::{Button, ButtonSize};
 use yew_bootstrap::util::Color;
-use crate::sighting::{Sighting, SightingDetails};
-use crate::contexts::{ApiUrl, ApiUrlContext};
 
 pub enum Msg {
     ClickLeft,
@@ -122,22 +122,24 @@ impl Component for Sightings {
         };
 
         html! {
-                    <>
-        <div class="nav">
-        <Button style={Color::Primary} onclick={onleftclick.clone()}>
-        {"<-"} </Button>
-        <Button style={Color::Primary} onclick={onrightclick.clone()}>{"->"}</Button>
+        <>
+        <div class="nav d-flex justify-content-between">
+            <Button style={Color::Primary} size={ButtonSize::Large} onclick={onleftclick.clone()}>
+            {"<-"} </Button>
+            <Button style={Color::Primary} size={ButtonSize::Large} onclick={onrightclick.clone()}>{"->"}</Button>
         </div>
-        <div id="images" class="row card justify-content-center d-grid gap-3">
-            {details}
+        <div id="images" class="container">
+            <div class="row">
+                {details}
+            </div>
         </div>
-        <div class="nav">
-        <Button style={Color::Primary} onclick={onleftclick}>
-        {"<-"} </Button>
-        <Button style={Color::Primary} onclick={onrightclick}>{"->"}</Button>
+        <div class="nav d-flex justify-content-between">
+            <Button style={Color::Primary} size={ButtonSize::Large} onclick={onleftclick}>
+            {"<-"} </Button>
+            <Button style={Color::Primary} size={ButtonSize::Large} onclick={onrightclick}>{"->"}</Button>
         </div>
-                    </>
-                }
+        </>
+        }
     }
 
     fn rendered(&mut self, _ctx: &Context<Self>, _first_render: bool) {}
