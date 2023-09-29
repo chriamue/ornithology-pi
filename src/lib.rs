@@ -14,6 +14,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 pub mod capture;
 pub mod cli;
 pub mod config;
+pub mod logger;
 pub mod mjpeg;
 pub mod sighting;
 

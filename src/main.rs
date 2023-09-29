@@ -6,27 +6,16 @@ use ornithology_pi::cli::Cli;
 use ornithology_pi::config;
 #[cfg(feature = "hotspot")]
 use ornithology_pi::hotspot::Hotspot;
+use ornithology_pi::logger::init_logger;
 #[cfg(feature = "server")]
 use ornithology_pi::server::server;
 use ornithology_pi::{Sighting, WebCam};
 use std::sync::{Arc, Mutex};
 
-fn init_logger(cli: &Cli) {
-    // default log level is info
-    if let Err(_) = std::env::var("RUST_LOG") {
-        std::env::set_var("RUST_LOG", "info");
-    }
-    // override log level if set in cli
-    if let Some(log_level) = cli.log_level.as_ref() {
-        std::env::set_var("RUST_LOG", log_level);
-    }
-    pretty_env_logger::init_timed();
-}
-
 #[tokio::main]
 async fn main() {
     let cli = Cli::new();
-    init_logger(&cli);
+    init_logger(&cli.log_level);
 
     cli.evaluate();
 

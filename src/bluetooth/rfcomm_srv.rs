@@ -1,3 +1,4 @@
+use super::Message;
 use crate::sighting::save_to_file;
 use crate::Sighting;
 use base64;
@@ -10,6 +11,7 @@ use bluer::{
 use futures::StreamExt;
 use image::{self, imageops::FilterType};
 use std::error::Error;
+use std::io::Cursor;
 use std::{
     sync::{Arc, Mutex},
     time::Duration,
@@ -18,8 +20,6 @@ use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
     time::sleep,
 };
-
-use super::Message;
 
 use super::MANUFACTURER_ID;
 pub const SERVICE_UUID: uuid::Uuid = uuid::Uuid::from_u128(0xF00DC0DE00001);
@@ -182,11 +182,11 @@ async fn handle_connection(
                     let buf = match image::open(format!("sightings/{}", filename)) {
                         Ok(base_img) => {
                             let base_img = base_img.resize(640, 480, FilterType::Gaussian);
-                            let mut buf = vec![];
+                            let mut buf = Cursor::new(Vec::new());
                             base_img
                                 .write_to(&mut buf, image::ImageOutputFormat::Jpeg(60))
                                 .unwrap();
-                            buf
+                            buf.into_inner()
                         }
                         Err(err) => {
                             println!("{:?}", err);
