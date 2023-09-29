@@ -28,7 +28,7 @@ impl Observer for BirdObserver {
         let mut sightings = self.sightings.lock().unwrap();
         sightings.push(sighting.0.clone());
         drop(sightings);
-        println!("{:?}", sighting.0.species);
+        log::info!("{:?}", sighting.0.species);
         self.save(sighting);
     }
 }

@@ -31,11 +31,11 @@ impl WebCam {
     pub fn new(width: u32, height: u32, fps: u32) -> Result<Self, Box<dyn Error>> {
         let running = Arc::new(Mutex::new(false));
         nokhwa_initialize(|granted| {
-            println!("Camera access granted {}", granted);
+            log::debug!("Camera access granted {}", granted);
         });
 
         let cameras = query(ApiBackend::Auto).unwrap();
-        cameras.iter().for_each(|cam| println!("{:?}", cam));
+        cameras.iter().for_each(|cam| log::debug!("{:?}", cam));
 
         //let format = RequestedFormat::new::<RgbFormat>(RequestedFormatType::None);
         let format = RequestedFormat::new::<RgbFormat>(RequestedFormatType::Exact(

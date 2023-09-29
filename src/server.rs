@@ -201,6 +201,7 @@ pub async fn server(config: &Config, sightings: SightingsContainer, capture: Arc
     let addr = SocketAddr::new(config.server.address.parse().unwrap(), config.server.port);
     let server = Server::bind(&addr).serve(app.into_make_service());
 
-    println!("listening on {}", addr);
+    log::info!("Listening on {}", addr);
+
     server.await.unwrap();
 }

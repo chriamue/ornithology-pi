@@ -38,6 +38,10 @@ pub struct Cli {
     /// Set the server address
     #[structopt(long)]
     pub address: Option<String>,
+
+    /// Set the logging level
+    #[structopt(long)]
+    pub log_level: Option<String>,
 }
 
 impl Cli {
@@ -74,22 +78,22 @@ impl Cli {
     pub fn evaluate(&self) {
         #[cfg(not(feature = "server"))]
         if self.server.unwrap_or(false) {
-            eprintln!("Error: The server feature is not enabled and can not be used.");
+            log::error!("Error: The server feature is not enabled and can not be used.");
         }
 
         #[cfg(not(feature = "hotspot"))]
         if self.hotspot.unwrap_or(false) {
-            eprintln!("Error: The hotspot feature is not enabled and can not be used.");
+            log::error!("Error: The hotspot feature is not enabled and can not be used.");
         }
 
         #[cfg(not(feature = "bluetooth"))]
         if self.bluetooth.unwrap_or(false) {
-            eprintln!("Error: The bluetooth feature is not enabled and can not be used.");
+            log::error!("Error: The bluetooth feature is not enabled and can not be used.");
         }
 
         #[cfg(not(feature = "detect"))]
         if self.detect.unwrap_or(false) {
-            eprintln!("Error: The detect feature is not enabled and can not be used.");
+            log::error!("Error: The detect feature is not enabled and can not be used.");
         }
     }
 }
