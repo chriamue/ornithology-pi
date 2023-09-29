@@ -45,7 +45,7 @@ impl WebCam {
         // let camera_index = cameras.first().unwrap().index().clone(); // is video1 not video0
         let camera_index = CameraIndex::Index(0 as u32);
 
-        let mut device = CallbackCamera::new(camera_index, format, callback).unwrap();
+        let mut device = CallbackCamera::new(camera_index, format, callback)?;
         device.open_stream()?;
 
         let mut webcam = Self {

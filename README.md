@@ -21,6 +21,55 @@ Ensure the installation of gstreamer development libraries for proper camera sup
 apt install libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev v4l-utils
 ```
 
+## 🖥️ Running the Application and CLI Parameters
+
+OrnithologyPi provides a command-line interface for easy configuration and operation. You can control the features like server, hotspot, bluetooth, and detect through command-line arguments. Below is the information on how to use these parameters:
+
+### Command Line Parameters:
+
+- `--server`: Activate server mode. This is enabled by default if the server feature is compiled.
+- `--hotspot`: Activate hotspot mode.
+- `--bluetooth`: Activate bluetooth mode.
+- `--detect`: Activate detect mode.
+
+### Example:
+
+To run the application with server mode, use the following command:
+
+```sh
+cargo run --release --features=server -- --server=true
+```
+
+This command will compile and run the OrnithologyPi application with the server feature enabled and the server mode activated.
+
+To disable the server mode (which is enabled by default), use:
+
+```sh
+cargo run --release --features=server -- --server=false
+```
+
+### Error Handling:
+
+If a feature is set on, but not compiled with the application, an error message will be displayed indicating that the feature is not enabled.
+
+### Running the Application:
+
+1. Open a terminal in the project's root directory.
+2. Run the application with the desired parameters. For example:
+
+```sh
+cargo run --release --features=server,bluetooth -- --server=true --bluetooth=true
+```
+
+This command will run the application with server and bluetooth features enabled.
+
+### Note:
+
+Ensure that the features you are trying to use are enabled during compilation. If a feature is not compiled and you try to use it, an error message will be displayed.
+
+By using the command-line interface, you can easily control the features and functionality of the OrnithologyPi application, tailoring it to your specific needs and environment.
+
+
 ### Examples
 
 - **Webcam Example**: Save output at `frame.jpg`.

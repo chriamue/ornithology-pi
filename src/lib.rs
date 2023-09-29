@@ -12,6 +12,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 // Modules related to capturing and processing images.
 pub mod capture;
+pub mod cli;
 pub mod config;
 pub mod mjpeg;
 pub mod sighting;

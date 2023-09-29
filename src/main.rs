@@ -2,6 +2,7 @@
 use ornithology_pi::bird_observer::run_detector;
 #[cfg(feature = "bluetooth")]
 use ornithology_pi::bluetooth::run_bluetooth;
+use ornithology_pi::cli::Cli;
 use ornithology_pi::config;
 #[cfg(feature = "hotspot")]
 use ornithology_pi::hotspot::Hotspot;
@@ -12,6 +13,9 @@ use std::sync::{Arc, Mutex};
 
 #[tokio::main]
 async fn main() {
+    let cli = Cli::new();
+    cli.evaluate();
+
     let config = config::load_config();
     let sightings: Arc<Mutex<Vec<Sighting>>> = Arc::new(Mutex::new(
         ornithology_pi::sighting::load_from_file("sightings/sightings.db").unwrap_or_default(),
@@ -32,7 +36,7 @@ async fn main() {
     #[cfg(feature = "hotspot")]
     hotspot.start();
     #[cfg(feature = "server")]
-    {
+    if cli.server.unwrap_or(false) {
         let launcher = server(&config, sightings.clone(), capture.clone());
         let _launched = launcher.await;
     }
