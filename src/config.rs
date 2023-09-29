@@ -4,7 +4,9 @@ use figment::{
 };
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Deserialize, Serialize)]
+use crate::cli::Cli;
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Shutdown {
     pub ctrlc: bool,
     pub signals: Vec<String>,
@@ -19,7 +21,7 @@ impl Default for Shutdown {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Camera {
     pub width: u32,
     pub height: u32,
@@ -36,7 +38,7 @@ impl Default for Camera {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Server {
     pub port: u16,
     pub address: String,
@@ -51,7 +53,7 @@ impl Default for Server {
     }
 }
 
-#[derive(Default, Debug, Deserialize, Serialize)]
+#[derive(Default, Debug, Clone, Deserialize, Serialize)]
 pub struct Config {
     pub shutdown: Shutdown,
     pub camera: Camera,
@@ -64,4 +66,56 @@ pub fn load_config() -> Config {
         .merge(Env::prefixed("APP_").ignore(&["PROFILE"]).global())
         .extract()
         .unwrap_or_default()
+}
+
+pub fn merge_cli_config(config: &Config, cli: &Cli) -> Config {
+    let mut config: Config = config.clone();
+
+    if let Some(width) = cli.width {
+        config.camera.width = width;
+    }
+
+    if let Some(height) = cli.height {
+        config.camera.height = height;
+    }
+
+    if let Some(fps) = cli.fps {
+        config.camera.fps = fps;
+    }
+
+    if let Some(port) = cli.port {
+        config.server.port = port;
+    }
+
+    if let Some(address) = &cli.address {
+        config.server.address = address.clone();
+    }
+
+    config
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_merge_cli_config() {
+        let config = Config::default();
+        let cli = Cli {
+            width: Some(1920),
+            height: Some(1080),
+            fps: Some(15),
+            port: Some(8080),
+            address: Some("localhost".into()),
+            ..Default::default()
+        };
+
+        let merged = merge_cli_config(&config, &cli);
+
+        assert_eq!(merged.camera.width, cli.width.unwrap());
+        assert_eq!(merged.camera.height, cli.height.unwrap());
+        assert_eq!(merged.camera.fps, cli.fps.unwrap());
+        assert_eq!(merged.server.port, cli.port.unwrap());
+        assert_eq!(merged.server.address, cli.address.unwrap());
+    }
 }

@@ -1,6 +1,6 @@
 use structopt::StructOpt;
 
-#[derive(StructOpt, Debug)]
+#[derive(StructOpt, Debug, Default)]
 #[structopt(name = "ornithology-pi", about = "Ornithology Pi Application.")]
 pub struct Cli {
     /// Activate server mode
@@ -18,6 +18,26 @@ pub struct Cli {
     /// Activate detect mode
     #[structopt(short, long)]
     pub detect: Option<bool>,
+
+    /// Set the camera width
+    #[structopt(long)]
+    pub width: Option<u32>,
+
+    /// Set the camera height
+    #[structopt(long)]
+    pub height: Option<u32>,
+
+    /// Set the camera fps
+    #[structopt(long)]
+    pub fps: Option<u32>,
+
+    /// Set the server port
+    #[structopt(long)]
+    pub port: Option<u16>,
+
+    /// Set the server address
+    #[structopt(long)]
+    pub address: Option<String>,
 }
 
 impl Cli {

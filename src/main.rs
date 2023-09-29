@@ -17,6 +17,8 @@ async fn main() {
     cli.evaluate();
 
     let config = config::load_config();
+    let config = config::merge_cli_config(&config, &cli);
+
     let sightings: Arc<Mutex<Vec<Sighting>>> = Arc::new(Mutex::new(
         ornithology_pi::sighting::load_from_file("sightings/sightings.db").unwrap_or_default(),
     ));
