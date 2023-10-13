@@ -1,9 +1,11 @@
+#[cfg(feature = "webcam")]
 use nokhwa::{
     pixel_format::RgbFormat,
     utils::{CameraFormat, CameraIndex, FrameFormat, RequestedFormat, RequestedFormatType},
     Camera,
 };
 
+#[cfg(feature = "webcam")]
 fn main() {
     let index = CameraIndex::Index(0);
     // request the absolute highest resolution CameraFormat that can be decoded to RGB.
@@ -27,4 +29,9 @@ fn main() {
     let decoded = frame.decode_image::<RgbFormat>().unwrap();
     println!("{}, {}", decoded.width(), decoded.height());
     decoded.save("frame.jpg").unwrap();
+}
+
+#[cfg(not(feature = "webcam"))]
+fn main() {
+    println!("Webcam feature not enabled");
 }

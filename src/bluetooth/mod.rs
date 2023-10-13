@@ -10,8 +10,7 @@ pub mod rfcomm_srv;
 
 pub const MANUFACTURER_ID: u16 = 0xf00d;
 
-pub async fn run_bluetooth(sightings: Arc<Mutex<Vec<Sighting>>>) -> bluer::Result<()> {
-    let session = bluer::Session::new().await?;
+pub async fn setup_session(session: &bluer::Session) -> bluer::Result<()> {
     let adapter_names = session.adapter_names().await?;
     let adapter_name = adapter_names.first().expect("No Bluetooth adapter present");
     let adapter = session.adapter(adapter_name)?;
@@ -25,6 +24,12 @@ pub async fn run_bluetooth(sightings: Arc<Mutex<Vec<Sighting>>>) -> bluer::Resul
         &adapter_name,
         adapter.address().await?
     );
+    Ok(())
+}
+
+pub async fn run_bluetooth(sightings: Arc<Mutex<Vec<Sighting>>>) -> bluer::Result<()> {
+    let mut session = bluer::Session::new().await?;
+    setup_session(&session).await?;
     /*let gatt_handle = gatt_srv::run_advertise(&adapter, sightings.clone())
     .await
     .unwrap();

@@ -13,7 +13,7 @@ build = "build.rs"
 default = ["server", "camera", "yolo"]
 full = ["bluetooth", "camera", "detect", "hotspot", "server"]
 pi = ["bluetooth", "camera", "detect", "server"]
-bluetooth = ["bluer"]
+bluetooth = ["base64", "bluer"]
 camera = ["nokhwa/input-native"]
 hotspot = ["wifi-rs"]
 server = ["axum", "base64", "tower", "tower-http"]
@@ -49,7 +49,7 @@ lenna_birds_plugin = { git = "https://github.com/lenna-project/birds-plugin", br
 lenna_yolo_plugin = { git = "https://github.com/lenna-project/yolo-plugin", branch = "main", default-features = false, optional = true }
 log = "0.4"
 mime = "0.3.17"
-nokhwa = { version = "0.10.4", features = ["output-threaded"] }
+nokhwa = { version = "0.10.4", features = ["output-threaded"], optional = true}
 
 rand = "0.8"
 serde = { version = "1.0", features = ["derive"] }

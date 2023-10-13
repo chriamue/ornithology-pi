@@ -16,5 +16,7 @@ pub trait Capture: Stream {
     }
 }
 
+#[cfg(feature = "webcam")]
 mod webcam;
+#[cfg(feature = "webcam")]
 pub use webcam::WebCam;

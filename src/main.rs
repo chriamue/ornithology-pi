@@ -9,7 +9,9 @@ use ornithology_pi::hotspot::Hotspot;
 use ornithology_pi::logger::init_logger;
 #[cfg(feature = "server")]
 use ornithology_pi::server::server;
-use ornithology_pi::{Sighting, WebCam};
+use ornithology_pi::Sighting;
+#[cfg(feature = "webcam")]
+use ornithology_pi::WebCam;
 use std::sync::{Arc, Mutex};
 
 #[tokio::main]
@@ -25,6 +27,8 @@ async fn main() {
     let sightings: Arc<Mutex<Vec<Sighting>>> = Arc::new(Mutex::new(
         ornithology_pi::sighting::load_from_file("sightings/sightings.db").unwrap_or_default(),
     ));
+
+    #[cfg(feature = "webcam")]
     let capture: Arc<Mutex<WebCam>> = Arc::new(Mutex::new(
         WebCam::new(config.camera.width, config.camera.height, config.camera.fps).unwrap(),
     ));

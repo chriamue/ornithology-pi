@@ -1,10 +1,12 @@
 // Publicly re-exporting types for external use.
 pub use self::{
-    capture::{Capture, WebCam},
+    capture::Capture,
     config::Config,
-    mjpeg::MJpeg,
     sighting::{DataSighting, Sighting},
 };
+
+#[cfg(feature = "webcam")]
+pub use self::{capture::WebCam, mjpeg::MJpeg};
 
 // Type aliases for convenience.
 pub type Error = Box<dyn std::error::Error + Send + Sync>;
@@ -15,6 +17,8 @@ pub mod capture;
 pub mod cli;
 pub mod config;
 pub mod logger;
+
+#[cfg(feature = "webcam")]
 pub mod mjpeg;
 pub mod sighting;
 

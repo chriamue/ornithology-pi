@@ -89,5 +89,7 @@ async fn main() {
     let target_address: Address = "B8:27:EB:4C:40:D5".parse().expect("invalid address");
     let target_address: Address = "00:15:83:0C:BF:EB".parse().expect("invalid address");
 
+    let target_address: Address = "DC:A6:32:84:72:93".parse().expect("invalid address");
+
     perform(target_address, CHANNEL).await.unwrap();
 }

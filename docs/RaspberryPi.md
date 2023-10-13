@@ -157,7 +157,7 @@ If you have a monitor and keyboard connected to your Raspberry Pi, you can find 
 3. Install prerequisites:
 ```sh
 sudo apt install git build-essential clang
-sudo apt install libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev v4l-utils libssl-dev
+sudo apt install libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev v4l-utils libssl-dev libdbus-1-dev
 curl https://sh.rustup.rs -sSf | sh
 cargo install --locked trunk
 cargo install --locked wasm-bindgen-cli
