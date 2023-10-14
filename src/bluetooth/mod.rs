@@ -23,7 +23,7 @@ pub async fn setup_session(session: &bluer::Session) -> bluer::Result<()> {
     adapter.set_discoverable_timeout(0).await?;
     adapter.set_pairable(false).await?;
 
-    println!(
+    log::info!(
         "Advertising on Bluetooth adapter {} with address {}",
         &adapter_name,
         adapter.address().await?
