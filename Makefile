@@ -2,7 +2,7 @@
 
 # Run the server with specific features
 server:
-	cargo run --features="server,detect,yolov8" --no-default-features --release
+	cargo run --features="server,detect,yolov8,webcam" --no-default-features --release
 
 # Build the project
 build:
