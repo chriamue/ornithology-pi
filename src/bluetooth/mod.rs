@@ -9,6 +9,10 @@ pub mod gatt_srv;
 pub mod rfcomm_srv;
 
 pub const MANUFACTURER_ID: u16 = 0xf00d;
+pub const SERVICE_UUID: uuid::Uuid = uuid::Uuid::from_u128(0xF00DC0DE00001);
+pub const CHARACTERISTIC_UUID: uuid::Uuid = uuid::Uuid::from_u128(0xF00DC0DE00002);
+pub const CHANNEL: u8 = 7;
+pub const MTU: u16 = 8192;
 
 pub async fn setup_session(session: &bluer::Session) -> bluer::Result<()> {
     let adapter_names = session.adapter_names().await?;
@@ -35,11 +39,7 @@ pub async fn run_bluetooth(sightings: Arc<Mutex<Vec<Sighting>>>) -> bluer::Resul
     .unwrap();
     */
 
-    rfcomm_srv::run_session(&session, sightings.clone())
-        .await
-        .unwrap();
-
-    //drop(gatt_handle);
+    rfcomm_srv::run_session(&session, sightings.clone()).await?;
 
     Ok(())
 }

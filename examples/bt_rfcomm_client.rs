@@ -3,10 +3,7 @@ use bluer::{
     Address,
 };
 
-use ornithology_pi::bluetooth::{
-    rfcomm_srv::{CHANNEL, MTU},
-    Message,
-};
+use ornithology_pi::bluetooth::{Message, CHANNEL, MTU};
 use std::time::Duration;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::time::sleep;

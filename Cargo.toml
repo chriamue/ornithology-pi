@@ -11,9 +11,10 @@ build = "build.rs"
 
 [features]
 default = ["server", "camera", "yolo"]
-full = ["bluetooth", "camera", "detect", "hotspot", "server"]
-pi = ["bluetooth", "camera", "detect", "server"]
-bluetooth = ["base64", "bluer"]
+full = ["bt-server", "camera", "detect", "hotspot", "server"]
+pi = ["bt-server", "camera", "detect", "server"]
+bluetooth = ["base64"]
+bt-server = ["bluetooth", "bluer"]
 camera = ["nokhwa/input-native"]
 hotspot = ["wifi-rs"]
 server = ["axum", "base64", "tower", "tower-http"]
