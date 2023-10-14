@@ -2,6 +2,9 @@ use std::sync::{Arc, Mutex};
 
 use crate::Sighting;
 
+mod handle_message;
+pub use handle_message::handle_message;
+
 mod message;
 pub use message::Message;
 
@@ -15,17 +18,14 @@ pub const CHANNEL: u8 = 7;
 pub const MTU: u16 = 8192;
 
 pub async fn setup_session(session: &bluer::Session) -> bluer::Result<()> {
-    let adapter_names = session.adapter_names().await?;
-    let adapter_name = adapter_names.first().expect("No Bluetooth adapter present");
-    let adapter = session.adapter(adapter_name)?;
+    let adapter = session.default_adapter().await?;
     adapter.set_powered(true).await?;
     adapter.set_discoverable(true).await?;
     adapter.set_discoverable_timeout(0).await?;
-    adapter.set_pairable(false).await?;
 
     log::info!(
         "Advertising on Bluetooth adapter {} with address {}",
-        &adapter_name,
+        adapter.name(),
         adapter.address().await?
     );
     Ok(())
