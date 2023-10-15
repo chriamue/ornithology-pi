@@ -2,16 +2,16 @@
 
 use bluer::{gatt::remote::Characteristic, AdapterEvent, Device, Result};
 use futures::{pin_mut, StreamExt};
+use pretty_env_logger::env_logger;
 use rand::Rng;
 use std::time::Duration;
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
     time::{sleep, timeout},
 };
-use pretty_env_logger::env_logger;
 
-use ornithology_pi::bluetooth::SERVICE_UUID;
 use ornithology_pi::bluetooth::CHARACTERISTIC_UUID;
+use ornithology_pi::bluetooth::SERVICE_UUID;
 
 async fn find_our_characteristic(device: &Device) -> Result<Option<Characteristic>> {
     let addr = device.address();
@@ -67,7 +67,10 @@ async fn exercise_characteristic(char: &Characteristic) -> Result<()> {
     let mut write_io = char.write_io().await?;
     println!("    Obtained write IO with MTU {} bytes", write_io.mtu());
     let mut notify_io = char.notify_io().await?;
-    println!("    Obtained notification IO with MTU {} bytes", notify_io.mtu());
+    println!(
+        "    Obtained notification IO with MTU {} bytes",
+        notify_io.mtu()
+    );
 
     // Flush notify buffer.
     let mut buf = [0; 1024];

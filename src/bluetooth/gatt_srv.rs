@@ -13,20 +13,20 @@ use bluer::{
     },
 };
 use futures::FutureExt;
+use futures::{future, pin_mut, StreamExt};
 use std::{
     collections::BTreeMap,
     sync::{Arc, Mutex},
     time::Duration,
 };
-use futures::{future, pin_mut, StreamExt};
 use tokio::{
-    io::{AsyncBufReadExt, BufReader, AsyncReadExt, AsyncWriteExt},
+    io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader},
     time::sleep,
 };
 
-use super::{MANUFACTURER_ID, CHARACTERISTIC_UUID};
+use super::{CHARACTERISTIC_UUID, MANUFACTURER_ID};
 
-use super::{SERVICE_UUID, CHANNEL, MTU};
+use super::{CHANNEL, MTU, SERVICE_UUID};
 
 pub const LAST_SIGHTING_CHARACTERISTIC: uuid::Uuid = uuid::Uuid::from_u128(0xF00DC0DE00003);
 pub const SIGHTING_COUNT_CHARACTERISTIC: uuid::Uuid = uuid::Uuid::from_u128(0xF00DC0DE00004);
@@ -106,8 +106,12 @@ pub fn last_species_characteristic(sightings: Arc<Mutex<Vec<Sighting>>>) -> Char
     }
 }
 
-pub fn stream_characteristic(char_handle: CharacteristicControlHandle, sightings: Arc<Mutex<Vec<Sighting>>>) -> Characteristic {
-    Characteristic { uuid: CHARACTERISTIC_UUID, 
+pub fn stream_characteristic(
+    char_handle: CharacteristicControlHandle,
+    sightings: Arc<Mutex<Vec<Sighting>>>,
+) -> Characteristic {
+    Characteristic {
+        uuid: CHARACTERISTIC_UUID,
         write: Some(CharacteristicWrite {
             write_without_response: true,
             method: CharacteristicWriteMethod::Io,
@@ -142,10 +146,7 @@ pub async fn run_advertise(
 pub async fn run_app(
     adapter: &bluer::Adapter,
     sightings: Arc<Mutex<Vec<Sighting>>>,
-) -> bluer::Result<(
-    ApplicationHandle,
-    CharacteristicControl
-)> {
+) -> bluer::Result<(ApplicationHandle, CharacteristicControl)> {
     let (char_control, char_handle) = characteristic_control();
     let app = Application {
         services: vec![Service {
@@ -153,9 +154,9 @@ pub async fn run_app(
             primary: true,
             characteristics: vec![
                 stream_characteristic(char_handle, sightings.clone()),
-                last_sighting_characteristic(sightings.clone()),
-                sighting_count_characteristic(sightings.clone()),
-                last_species_characteristic(sightings.clone()),
+                // last_sighting_characteristic(sightings.clone()),
+                // sighting_count_characteristic(sightings.clone()),
+                // last_species_characteristic(sightings.clone()),
             ],
             ..Default::default()
         }],
@@ -165,7 +166,10 @@ pub async fn run_app(
     Ok((app_handle, char_control))
 }
 
-pub async fn listen(char_control: CharacteristicControl, sightings: Arc<Mutex<Vec<Sighting>>>) -> bluer::Result<()> {
+pub async fn listen(
+    char_control: CharacteristicControl,
+    sightings: Arc<Mutex<Vec<Sighting>>>,
+) -> bluer::Result<()> {
     let mut read_buf = Vec::new();
     let mut reader_opt: Option<CharacteristicReader> = None;
     let mut writer_opt: Option<CharacteristicWriter> = None;
@@ -226,9 +230,7 @@ pub async fn run(sightings: Arc<Mutex<Vec<Sighting>>>) -> bluer::Result<()> {
     let adapter = session.default_adapter().await?;
 
     let adv_handle = run_advertise(&adapter).await.unwrap();
-    let (app_handle, char_control) =
-        run_app(&adapter, sightings.clone()).await.unwrap();
-
+    let (app_handle, char_control) = run_app(&adapter, sightings.clone()).await.unwrap();
 
     let listen_handle = tokio::spawn(listen(char_control, sightings.clone()));
 

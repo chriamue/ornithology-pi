@@ -12,8 +12,8 @@ pub mod gatt_srv;
 pub mod rfcomm_srv;
 
 pub const MANUFACTURER_ID: u16 = 0xf00d;
-pub const SERVICE_UUID: uuid::Uuid = uuid::Uuid::from_u128(0xF00DC0DE00001);
-pub const CHARACTERISTIC_UUID: uuid::Uuid = uuid::Uuid::from_u128(0xF00DC0DE00002);
+pub const SERVICE_UUID: uuid::Uuid = uuid::Uuid::from_u128(0xFEEDC0DE);
+pub const CHARACTERISTIC_UUID: uuid::Uuid = uuid::Uuid::from_u128(0xF00DC0DE00001);
 pub const CHANNEL: u8 = 7;
 pub const MTU: u16 = 8192;
 
