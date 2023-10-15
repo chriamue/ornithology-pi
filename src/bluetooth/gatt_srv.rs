@@ -2,7 +2,15 @@ use crate::bluetooth::setup_session;
 use crate::Sighting;
 use bluer::{
     adv::Advertisement,
-    gatt::local::{Application, Characteristic, CharacteristicRead, Service},
+    gatt::{
+        local::{
+            characteristic_control, Application, ApplicationHandle, Characteristic,
+            CharacteristicControl, CharacteristicControlEvent, CharacteristicControlHandle,
+            CharacteristicNotify, CharacteristicNotifyMethod, CharacteristicRead,
+            CharacteristicWrite, CharacteristicWriteMethod, Service,
+        },
+        CharacteristicReader, CharacteristicWriter,
+    },
 };
 use futures::FutureExt;
 use std::{
@@ -10,14 +18,16 @@ use std::{
     sync::{Arc, Mutex},
     time::Duration,
 };
+use futures::{future, pin_mut, StreamExt};
 use tokio::{
-    io::{AsyncBufReadExt, BufReader},
+    io::{AsyncBufReadExt, BufReader, AsyncReadExt, AsyncWriteExt},
     time::sleep,
 };
 
-use super::MANUFACTURER_ID;
+use super::{MANUFACTURER_ID, CHARACTERISTIC_UUID};
 
-pub const SERVICE_UUID: uuid::Uuid = uuid::Uuid::from_u128(0xF00DC0DE00001);
+use super::{SERVICE_UUID, CHANNEL, MTU};
+
 pub const LAST_SIGHTING_CHARACTERISTIC: uuid::Uuid = uuid::Uuid::from_u128(0xF00DC0DE00003);
 pub const SIGHTING_COUNT_CHARACTERISTIC: uuid::Uuid = uuid::Uuid::from_u128(0xF00DC0DE00004);
 pub const LAST_SPECIES_CHARACTERISTIC: uuid::Uuid = uuid::Uuid::from_u128(0xF00DC0DE00005);
@@ -96,6 +106,23 @@ pub fn last_species_characteristic(sightings: Arc<Mutex<Vec<Sighting>>>) -> Char
     }
 }
 
+pub fn stream_characteristic(char_handle: CharacteristicControlHandle, sightings: Arc<Mutex<Vec<Sighting>>>) -> Characteristic {
+    Characteristic { uuid: CHARACTERISTIC_UUID, 
+        write: Some(CharacteristicWrite {
+            write_without_response: true,
+            method: CharacteristicWriteMethod::Io,
+            ..Default::default()
+        }),
+        notify: Some(CharacteristicNotify {
+            notify: true,
+            method: CharacteristicNotifyMethod::Io,
+            ..Default::default()
+        }),
+        control_handle: char_handle,
+        ..Default::default()
+    }
+}
+
 pub async fn run_advertise(
     adapter: &bluer::Adapter,
 ) -> bluer::Result<bluer::adv::AdvertisementHandle> {
@@ -115,12 +142,17 @@ pub async fn run_advertise(
 pub async fn run_app(
     adapter: &bluer::Adapter,
     sightings: Arc<Mutex<Vec<Sighting>>>,
-) -> bluer::Result<bluer::gatt::local::ApplicationHandle> {
+) -> bluer::Result<(
+    ApplicationHandle,
+    CharacteristicControl
+)> {
+    let (char_control, char_handle) = characteristic_control();
     let app = Application {
         services: vec![Service {
             uuid: SERVICE_UUID,
             primary: true,
             characteristics: vec![
+                stream_characteristic(char_handle, sightings.clone()),
                 last_sighting_characteristic(sightings.clone()),
                 sighting_count_characteristic(sightings.clone()),
                 last_species_characteristic(sightings.clone()),
@@ -130,7 +162,62 @@ pub async fn run_app(
         ..Default::default()
     };
     let app_handle = adapter.serve_gatt_application(app).await?;
-    Ok(app_handle)
+    Ok((app_handle, char_control))
+}
+
+pub async fn listen(char_control: CharacteristicControl, sightings: Arc<Mutex<Vec<Sighting>>>) -> bluer::Result<()> {
+    let mut read_buf = Vec::new();
+    let mut reader_opt: Option<CharacteristicReader> = None;
+    let mut writer_opt: Option<CharacteristicWriter> = None;
+    pin_mut!(char_control);
+
+    loop {
+        tokio::select! {
+            evt = char_control.next() => {
+                match evt {
+                    Some(CharacteristicControlEvent::Write(req)) => {
+                        println!("Accepting write request event with MTU {}", req.mtu());
+                        read_buf = vec![0; req.mtu()];
+                        reader_opt = Some(req.accept()?);
+                    },
+                    Some(CharacteristicControlEvent::Notify(notifier)) => {
+                        println!("Accepting notify request event with MTU {}", notifier.mtu());
+                        writer_opt = Some(notifier);
+                    },
+                    None => break,
+                }
+            },
+            read_res = async {
+                match &mut reader_opt {
+                    Some(reader) if writer_opt.is_some() => reader.read(&mut read_buf).await,
+                    _ => future::pending().await,
+                }
+            } => {
+                match read_res {
+                    Ok(0) => {
+                        println!("Read stream ended");
+                        reader_opt = None;
+                    }
+                    Ok(n) => {
+                        let value = read_buf[..n].to_vec();
+                        println!("Echoing {} bytes: {:x?} ... {:x?}", value.len(), &value[0..4.min(value.len())], &value[value.len().saturating_sub(4) ..]);
+                        if value.len() < 512 {
+                            println!();
+                        }
+                        if let Err(err) = writer_opt.as_mut().unwrap().write_all(&value).await {
+                            println!("Write failed: {}", &err);
+                            writer_opt = None;
+                        }
+                    }
+                    Err(err) => {
+                        println!("Read stream error: {}", &err);
+                        reader_opt = None;
+                    }
+                }
+            }
+        }
+    }
+    Ok(())
 }
 
 pub async fn run(sightings: Arc<Mutex<Vec<Sighting>>>) -> bluer::Result<()> {
@@ -139,7 +226,11 @@ pub async fn run(sightings: Arc<Mutex<Vec<Sighting>>>) -> bluer::Result<()> {
     let adapter = session.default_adapter().await?;
 
     let adv_handle = run_advertise(&adapter).await.unwrap();
-    let app_handle = run_app(&adapter, sightings.clone()).await.unwrap();
+    let (app_handle, char_control) =
+        run_app(&adapter, sightings.clone()).await.unwrap();
+
+
+    let listen_handle = tokio::spawn(listen(char_control, sightings.clone()));
 
     log::info!("Service ready. Press enter to quit.");
     let stdin = BufReader::new(tokio::io::stdin());
@@ -149,6 +240,8 @@ pub async fn run(sightings: Arc<Mutex<Vec<Sighting>>>) -> bluer::Result<()> {
     log::info!("Removing service and advertisement");
     drop(adv_handle);
     drop(app_handle);
+    //drop(char_control);
+    drop(listen_handle);
     sleep(Duration::from_secs(1)).await;
     Ok(())
 }

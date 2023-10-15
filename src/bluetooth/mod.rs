@@ -2,10 +2,10 @@ use std::sync::{Arc, Mutex};
 
 use crate::Sighting;
 
-mod handle_message;
+pub mod handle_message;
 pub use handle_message::handle_message;
 
-mod message;
+pub mod message;
 pub use message::Message;
 
 pub mod gatt_srv;
