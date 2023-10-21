@@ -46,7 +46,7 @@ pub fn last_sighting_characteristic(sightings: Arc<Mutex<Vec<Sighting>>>) -> Cha
                         serde_json::json!(sighting)
                     };
                     let value = value.to_string().as_bytes().to_vec();
-                    println!("Read request {:?} with value {:x?}", &req, &value);
+                    log::debug!("Read request {:?} with value {:x?}", &req, &value);
                     Ok(value)
                 }
                 .boxed()
@@ -70,7 +70,7 @@ pub fn sighting_count_characteristic(sightings: Arc<Mutex<Vec<Sighting>>>) -> Ch
                         serde_json::json!(value.len())
                     };
                     let value = value.to_string().as_bytes().to_vec();
-                    println!("Read request {:?} with value {:x?}", &req, &value);
+                    log::debug!("Read request {:?} with value {:x?}", &req, &value);
                     Ok(value)
                 }
                 .boxed()
@@ -95,7 +95,7 @@ pub fn last_species_characteristic(sightings: Arc<Mutex<Vec<Sighting>>>) -> Char
                         serde_json::json!(sighting.species)
                     };
                     let value = value.to_string().as_bytes().to_vec();
-                    println!("Read request {:?} with value {:x?}", &req, &value);
+                    log::debug!("Read request {:?} with value {:x?}", &req, &value);
                     Ok(value)
                 }
                 .boxed()
@@ -180,12 +180,12 @@ pub async fn listen(
             evt = char_control.next() => {
                 match evt {
                     Some(CharacteristicControlEvent::Write(req)) => {
-                        println!("Accepting write request event with MTU {}", req.mtu());
+                        log::debug!("Accepting write request event with MTU {}", req.mtu());
                         read_buf = vec![0; req.mtu()];
                         reader_opt = Some(req.accept()?);
                     },
                     Some(CharacteristicControlEvent::Notify(notifier)) => {
-                        println!("Accepting notify request event with MTU {}", notifier.mtu());
+                        log::debug!("Accepting notify request event with MTU {}", notifier.mtu());
                         writer_opt = Some(notifier);
                     },
                     None => break,
@@ -199,22 +199,22 @@ pub async fn listen(
             } => {
                 match read_res {
                     Ok(0) => {
-                        println!("Read stream ended");
+                        log::debug!("Read stream ended");
                         reader_opt = None;
                     }
                     Ok(n) => {
                         let value = read_buf[..n].to_vec();
-                        println!("Echoing {} bytes: {:x?} ... {:x?}", value.len(), &value[0..4.min(value.len())], &value[value.len().saturating_sub(4) ..]);
+                        log::debug!("Echoing {} bytes: {:x?} ... {:x?}", value.len(), &value[0..4.min(value.len())], &value[value.len().saturating_sub(4) ..]);
                         if value.len() < 512 {
-                            println!();
+                            log::debug!("");
                         }
                         if let Err(err) = writer_opt.as_mut().unwrap().write_all(&value).await {
-                            println!("Write failed: {}", &err);
+                            log::debug!("Write failed: {}", &err);
                             writer_opt = None;
                         }
                     }
                     Err(err) => {
-                        println!("Read stream error: {}", &err);
+                        log::debug!("Read stream error: {}", &err);
                         reader_opt = None;
                     }
                 }
