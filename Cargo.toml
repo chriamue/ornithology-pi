@@ -10,7 +10,7 @@ repository = "https://github.com/chriamue/ornithology-pi"
 build = "build.rs"
 
 [features]
-default = ["server", "camera", "yolo"]
+default = ["server", "camera", "yolo", "bt-server"]
 full = ["bt-server", "camera", "detect", "hotspot", "server"]
 pi = ["bt-server", "camera", "detect", "server"]
 bluetooth = ["base64"]
@@ -18,7 +18,7 @@ bt-server = ["bluetooth", "bluer"]
 webcam = ["camera"]
 camera = ["nokhwa/input-native"]
 hotspot = ["wifi-rs"]
-server = ["axum", "base64", "tower", "tower-http"]
+server = ["axum", "base64", "tower", "tower-http", "webcam"]
 window = ["show-image/image"]
 detect = [
     "camera",
@@ -51,7 +51,7 @@ lenna_birds_plugin = { git = "https://github.com/lenna-project/birds-plugin", br
 lenna_yolo_plugin = { git = "https://github.com/lenna-project/yolo-plugin", branch = "main", default-features = false, optional = true }
 log = "0.4"
 mime = "0.3.17"
-nokhwa = { version = "0.10.4", features = ["output-threaded"], optional = true}
+nokhwa = { git = "https://github.com/l1npengtul/nokhwa", branch = "0.10", features = ["output-threaded"], optional = true}
 
 rand = "0.8"
 serde = { version = "1.0", features = ["derive"] }

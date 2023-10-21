@@ -1,7 +1,9 @@
 #[cfg(feature = "detect")]
 use crate::BirdDetector;
 use crate::{sighting::save_to_file, Config};
-use crate::{Capture, MJpeg, Sighting, WebCam};
+use crate::{Capture, Sighting};
+#[cfg(feature = "webcam")]
+use crate::{MJpeg, WebCam};
 use axum::{
     body::StreamBody,
     extract,
@@ -89,6 +91,7 @@ async fn get_sightings(
     Ok(Json(json!(sightings)))
 }
 
+#[cfg(feature = "webcam")]
 async fn webcam(
     Extension(capture): Extension<Arc<Mutex<WebCam>>>,
 ) -> Result<Response<Body>, AppError> {
@@ -104,6 +107,7 @@ async fn webcam(
         .map_err(|_| AppError::ResponseBuildError)
 }
 
+#[cfg(feature = "webcam")]
 async fn frame(
     Extension(capture): Extension<Arc<Mutex<WebCam>>>,
 ) -> Result<Response<Body>, AppError> {
@@ -189,9 +193,9 @@ pub async fn server(config: &Config, sightings: SightingsContainer, capture: Arc
     let app = Router::new()
         .nest_service("/", serve_dir.clone())
         .route("/generate_204", get(generate_204))
-        .route("/sightings", get(get_sightings))
         .route("/webcam", get(webcam))
         .route("/frame", get(frame))
+        .route("/sightings", get(get_sightings))
         .route("/sightings/:id", get(sighting))
         .route("/sightings/:id", delete(delete_sighting))
         .layer(Extension(sightings.clone()))
