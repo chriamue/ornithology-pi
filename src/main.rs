@@ -30,7 +30,13 @@ async fn main() {
 
     #[cfg(feature = "webcam")]
     let capture: Arc<Mutex<WebCam>> = Arc::new(Mutex::new(
-        WebCam::new(config.camera.width, config.camera.height, config.camera.fps).unwrap(),
+        WebCam::new(
+            config.camera.width,
+            config.camera.height,
+            config.camera.fps,
+            config.camera.device.clone(),
+        )
+        .unwrap(),
     ));
 
     log::info!("Loaded Config: {:?}", config);

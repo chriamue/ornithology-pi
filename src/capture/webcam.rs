@@ -28,7 +28,12 @@ pub struct WebCam {
 }
 
 impl WebCam {
-    pub fn new(width: u32, height: u32, fps: u32) -> Result<Self, Box<dyn Error>> {
+    pub fn new(
+        width: u32,
+        height: u32,
+        fps: u32,
+        device: Option<String>,
+    ) -> Result<Self, Box<dyn Error>> {
         let running = Arc::new(Mutex::new(false));
         nokhwa_initialize(|granted| {
             log::debug!("Camera access granted {}", granted);
@@ -42,8 +47,11 @@ impl WebCam {
             CameraFormat::new_from(width, height, FrameFormat::MJPEG, fps),
         ));
 
-        // let camera_index = cameras.first().unwrap().index().clone(); // is video1 not video0
-        let camera_index = CameraIndex::Index(0 as u32);
+        let camera_index = if let Some(device) = device {
+            CameraIndex::String(device)
+        } else {
+            CameraIndex::Index(0 as u32)
+        };
 
         let mut device = CallbackCamera::new(camera_index, format, callback)?;
         device.open_stream()?;
@@ -71,7 +79,7 @@ impl WebCam {
 
 impl Default for WebCam {
     fn default() -> Self {
-        Self::new(640, 480, 30).unwrap()
+        Self::new(640, 480, 30, Some("0".to_string())).unwrap()
     }
 }
 
@@ -121,7 +129,7 @@ mod tests {
 
     #[tokio::test]
     async fn stream_stopped() {
-        let mut webcam = WebCam::new(640, 480, 30).unwrap();
+        let mut webcam = WebCam::new(640, 480, 30, Some("0".to_string())).unwrap();
         webcam.stop();
         let stream = webcam.next().await;
         assert!(stream.is_none());

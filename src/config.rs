@@ -23,6 +23,7 @@ impl Default for Shutdown {
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Camera {
+    pub device: Option<String>,
     pub width: u32,
     pub height: u32,
     pub fps: u32,
@@ -31,6 +32,7 @@ pub struct Camera {
 impl Default for Camera {
     fn default() -> Self {
         Camera {
+            device: None,
             width: 640,
             height: 480,
             fps: 30,
@@ -112,6 +114,7 @@ mod tests {
 
         let merged = merge_cli_config(&config, &cli);
 
+        assert_eq!(merged.camera.device, None);
         assert_eq!(merged.camera.width, cli.width.unwrap());
         assert_eq!(merged.camera.height, cli.height.unwrap());
         assert_eq!(merged.camera.fps, cli.fps.unwrap());
