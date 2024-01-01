@@ -4,6 +4,12 @@ OrnithologyPi is a Rust-based project that captures and analyzes a video stream 
 
 ![Overview](https://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/chriamue/ornithology-pi/main/docs/overview.puml)
 
+## ⚠️ State of Development
+
+The project is currently in the early stages of development. The development is done from time to time.
+The project is not yet ready for production use.
+I am working on many dependencies that will take some time to complete.
+
 ## 🎥 How It Works
 
 1. **Capture Stream**: Utilizes a webcam to capture a live video stream.
@@ -154,6 +160,32 @@ To enable the service on boot:
 ```sh
 sudo systemctl enable ornithology-pi
 ```
+
+## Configuration
+
+The configuration file is located at `config.toml`.
+
+### Example
+
+```toml
+[default.shutdown]
+ctrlc = false
+signals = ["term", "hup"]
+
+[default.camera]
+device = "0"
+width = 640
+height = 480
+fps = 30
+
+[default.server]
+port = 8000
+address = "0.0.0.0"
+```
+
+The device for camera is optional and must be a number. If no device is specified, the first available device will be used.
+
+I had sometimes problems with camera configurations that are not supported by the camera. If you have problems with the camera, try to change the configuration of width, height, and fps.
 
 ## 🛠️ Using the Makefile
 
